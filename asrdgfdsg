@@ -331,7 +331,7 @@ local ancientValues = {
     ["Dogey"] = 90,
     ["Red Pumpkin"] = 100,
     ["Green Pumpkin"] = 60,
-    ["Jetstream"] = 13,
+    ["Jetstream"] = 8,
     ["Purple Pumpkin"] = 12,
     ["Vampire Bat"] = 12,
     ["Rudolph"] = 12,
@@ -345,10 +345,10 @@ local ancientValues = {
     ["Seahorsey"] = 13,
     ["Chilly"] = 12,
     ["Pengy"] = 12,
-    ["Tankie"] = 10,
+    ["Tankie"] = 8,
     ["<3"] = 10,
     ["Mechbug"] = 5,
-    ["UFO"] = 5,
+    ["UFO"] = 4,
     ["Deathspeaker"] = 1,
     ["Phoenix"] = 1,
     ["Frostbird"] = 1,
@@ -375,6 +375,395 @@ local ancientValues = {
     ["Chroma Fire Pig"] = 7,
     ["Chroma Fire Bear"] = 7,
 }
+
+-- Цвета для статусов стабильности
+local stabilityColors = {
+    ["Stable"] = Color3.fromRGB(0, 255, 100),      -- Зелёный
+    ["Rising"] = Color3.fromRGB(0, 0, 255),      -- Синий
+    ["Dropping"] = Color3.fromRGB(255, 50, 50),    -- Красный
+    ["Unstable"] = Color3.fromRGB(180, 0, 255),    -- Фиолетовый
+    ["Underpaid"] = Color3.fromRGB(255, 165, 0),   -- Оранжевый
+    ["Overpaid"] = Color3.fromRGB(255, 255, 0),    -- Жёлтый
+    ["Unknown"] = Color3.fromRGB(150, 150, 150),   -- Серый
+}
+
+-- Таблица стабильности скинов (можно писать "Underpaid, 225" или просто "Stable")
+local stabilityValues = {
+	["Corrupt"] = "Stable",
+    ["Gingerscope"] = "Stable",
+    ["Traveler's Axe"] = "Stable",
+    ["Harvester"] = "Underpaid, 320",
+    ["Celestial"] = "Stable",
+    ["Icepiercer"] = "Underpaid, 220",
+    ["Vampire's Axe"] = "Stable",
+    ["Icebreaker"] = "Stable",
+    ["Swirly Axe"] = "Stable",
+    ["Batwing"] = "Stable",
+    ["Elderwood Scythe"] = "Stable",
+    ["Hallowscythe"] = "Stable",
+    ["Logchopper"] = "Stable",
+    ["Icewing"] = "Unstable, 10-20",
+	["Traveler's Gun"] = "Stable",
+	["Evergun"] = "Stable",
+	["Turkey"] = "Stable",
+	["Evergreen"] = "Stable",
+	["Blossom"] = "Rising, 1100",
+	["Sakura"] = "Rising, 1090",
+	["Vampire's Gun"] = "Stable",
+	["Constellation"] = "Stable",
+	["Bauble"] = "Stable",
+	["Darkshot"] = "Stable",
+	["Darksword"] = "Stable",
+    ["Bloom"] = "Stable",
+    ["Flora"] = "Stable",
+    ["Treat"] = "Underpaid, 220",
+    ["Heart Wand"] = "Underpaid, 225",
+    ["Sweet"] = "Underpaid, 215",
+	["Bat"] = "Stable",
+    ["Alienbeam"] = "Stable",
+    ["Raygun"] = "Rising, 1000",
+    ["Sunrise"] = "Rising, 750",
+    ["Sunset"] = "Rising, 375",
+    ["Snowcannon"] = "Stable",
+    ["Snow Dagger"] = "Stable",
+    ["Blizzard"] = "Stable",
+    ["Snowstorm"] = "Stable",
+    ["Xenoknife"] = "Stable",
+    ["Xenoshot"] = "Stable",
+	["Rainbow Gun"] = "Stable",
+	["Rainbow"] = "Stable",
+	["Candy"] = "Stable",
+	["Heartblade"] = "Stable",
+	["Flowerwood Gun"] = "Stable",
+	["Ocean"] = "Stable",
+	["Soul"] = "Stable",
+	["Spirit"] = "Stable",
+	["Flowerwood"] = "Stable",
+	["Waves"] = "Stable",
+	["Borealis"] = "Stable",
+	["Sugar"] = "Stable",
+	["Australis"] = "Stable",
+	["Luger"] = "Stable",
+	["Red Luger"] = "Stable",
+	["Swirly Gun"] = "Stable",
+	["Iceblaster"] = "Stable",
+	["Candleflame"] = "Stable",
+	["Elderwood Blade"] = "Stable",
+	["Makeshift"] = "Stable",
+	["Watergun"] = "Stable",
+	["Pearl"] = "Stable",
+	["Pearlshine"] = "Stable",
+	["Darkbringer"] = "Stable",
+	["Elderwood Revolver"] = "Stable",
+	["Phantom"] = "Stable",
+	["Spectre"] = "Stable",
+	["Lightbringer"] = "Stable",
+    ["Ornament"] = "Stable",
+	["Swirly Blade"] = "Stable",
+	["Green Luger"] = "Stable",
+	["Hallowgun"] = "Stable",
+	["Laser"] = "Stable",
+	["Icebeam"] = "Stable",
+	["Iceflake"] = "Stable",
+	["Plasmabeam"] = "Stable",
+	["Plasmablade"] = "Stable",
+	["Amerilaser"] = "Stable",
+	["Blaster"] = "Stable",
+	["Nightblade"] = "Stable",
+	["Old Glory"] = "Stable",
+	["Nebula"] = "Stable",
+	["Shark"] = "Stable",
+	["Virtual"] = "Stable",
+	["Cookiecane"] = "Stable",
+	["Gingermint"] = "Stable",
+	["Gemstone"] = "Stable",
+	["Clockwork"] = "Stable",
+	["Eternalcane"] = "Stable",
+	["Ginger Luger"] = "Stable",
+	["Lugercane"] = "Stable",
+	["Pixel"] = "Stable",
+	["Slasher"] = "Stable",
+	["Gingerblade"] = "Stable",
+	["Heat"] = "Stable",
+	["BattleAxe II"] = "Stable",
+	["Deathshard"] = "Stable",
+	["Minty"] = "Stable",
+	["Tides"] = "Stable",
+	["Fang"] = "Stable",
+	["Jinglegun"] = "Stable",
+	["Spider"] = "Stable",
+	["Chill"] = "Stable",
+	["Bioblade"] = "Stable",
+	["Vampire's Edge"] = "Stable",
+	["Pumpking"] = "Stable",
+	["Frostsaber"] = "Stable",
+	["BattleAxe"] = "Stable",
+	["Flames"] = "Stable",
+	["Hallow's Edge"] = "Stable",
+	["Ice Dragon"] = "Stable",
+	["Ice Shard"] = "Stable",
+	["Winter's Edge"] = "Stable",
+	["Xmas"] = "Stable",
+	["Hallow's Blade"] = "Stable",
+	["Handsaw"] = "Stable",
+	["Eternal"] = "Stable",
+	["Eternal II"] = "Stable",
+	["Eternal III"] = "Stable",
+	["Eternal IV"] = "Stable",
+	["Boneblade"] = "Stable",
+	["Ghostblade"] = "Stable",
+	["Eggblade"] = "Stable",
+	["Frostbite"] = "Stable",
+	["Prismatic"] = "Stable",
+	["Saw"] = "Stable",
+	["Snowflake"] = "Stable",
+	["Peppermint"] = "Stable",
+	["Cookieblade"] = "Stable",
+	["Blue Seer"] = "Stable",
+	["Purple Seer"] = "Stable",
+	["Red Seer"] = "Stable",
+	["Seer"] = "Stable",
+	["Orange Seer"] = "Stable",
+	["Yellow Seer"] = "Stable",
+	["Chroma Traveler's Gun"] = "Stable",
+    ["Chroma Evergun"] = "Stable",
+    ["Chroma Evergreen"] = "Stable",
+    ["Chroma Vampire's Gun"] = "Stable",
+    ["Chroma Bauble"] = "Stable",
+    ["Chroma Constellation"] = "Stable",
+    ["Chroma AlienBeam"] = "Stable",
+    ["Chroma Raygun"] = "Stable",
+    ["Chroma Treat"] = "Stable",
+    ["Chroma Sweet"] = "Stable",
+    ["Chroma Heart Wand"] = "Stable",
+    ["Chroma Blizzard"] = "Stable",
+    ["Chroma Sunrise"] = "Stable",
+    ["Chroma Snowstorm"] = "Stable",
+    ["Chroma Snowcannon"] = "Stable",
+    ["Chroma Snow Dagger"] = "Stable",
+    ["Chroma Sunset"] = "Stable",
+    ["Chroma Ornament"] = "Stable",
+    ["Chroma Watergun"] = "Stable",
+    ["Chroma Darkbringer"] = "Stable",
+    ["Chroma Lightbringer"] = "Stable",
+    ["Chroma Luger"] = "Stable",
+    ["Chroma Laser"] = "Stable",
+    ["Chroma Candleflame"] = "Stable",
+    ["Chroma Elderwood Blade"] = "Stable",
+    ["Chroma Swirly Gun"] = "Stable",
+    ["Chroma Cookiecane"] = "Stable",
+    ["Chroma Deathshard"] = "Stable",
+    ["Chroma Heat"] = "Stable",
+    ["Chroma Shark"] = "Stable",
+    ["Chroma Slasher"] = "Stable",
+    ["Chroma Tides"] = "Stable",
+    ["Chroma Fang"] = "Stable",
+    ["Chroma Gemstone"] = "Stable",
+    ["Chroma Gingerblade"] = "Stable",
+    ["Chroma Seer"] = "Stable",
+    ["Chroma Boneblade"] = "Stable",
+    ["Chroma Saw"] = "Stable",
+	["Ghost"] = "Stable",
+    ["America"] = "Stable",
+    ["Blood"] = "Stable",
+    ["Phaser"] = "Stable",
+    ["Shadow"] = "Stable",
+    ["Prince"] = "Stable",
+    ["Cowboy"] = "Stable",
+    ["Golden"] = "Stable",
+    ["Splitter"] = "Stable",
+    ["JD"] = "Unstable, 30-40",
+    ["Latte Gun"] = "Unstable, 125-135",
+    ["Latte Knife"] = "Unstable, 125-135",
+    ["Cotton Candy"] = "Unstable, 35-45",
+    ["Beach"] = "Stable",
+    ["Cavern Knife"] = "Stable",
+    ["Witched"] = "Stable",
+    ["Skulls"] = "Stable",
+    ["Icedriller"] = "Stable",
+    ["Spectral Knife"] = "Stable",
+    ["Vampire Gun"] = "Stable",
+    ["Green Elite"] = "Stable",
+    ["Santa's Spirit"] = "Stable",
+    ["Aurora Gun"] = "Stable",
+    ["Ginger Gun"] = "Stable",
+    ["Blue Elite"] = "Stable",
+    ["Ghost Knife"] = "Stable",
+    ["Traveler Gun"] = "Stable",
+    ["Broken"] = "Stable",
+    ["Santa's Magic"] = "Stable",
+    ["Red Scratch"] = "Stable",
+    ["Red Fire"] = "Stable",
+    ["Arctic Gun"] = "Stable",
+    ["Icecracker"] = "Stable",
+    ["Nightsky"] = "Stable",
+    ["Blue Scratch"] = "Stable",
+    ["Ghost Gun"] = "Stable",
+    ["Rupture"] = "Stable",
+    ["Tree Gun"] = "Stable",
+    ["Tree Knife"] = "Stable",
+    ["Web"] = "Stable",
+    ["Chromatic Knife"] = "Stable",
+    ["Cursed Knife"] = "Stable",
+    ["Frostfade Knife"] = "Stable",
+    ["Vampire Knife"] = "Stable",
+    ["Cavern Gun"] = "Stable",
+    ["Cane"] = "Stable",
+    ["Silent Night"] = "Stable",
+    ["Aurora"] = "Stable",
+    ["Icicles"] = "Stable",
+    ["Dungeon"] = "Stable",
+    ["Candy Swirl"] = "Stable",
+    ["Toxic"] = "Stable",
+    ["Vampire"] = "Stable",
+    ["Snakebite"] = "Stable",
+    ["Monster"] = "Stable",
+    ["Magma"] = "Stable",
+    ["Bats"] = "Stable",
+    ["Green Marble"] = "Stable",
+    ["Jack"] = "Stable",
+    ["Orange Marble"] = "Stable",
+    ["Floral"] = "Stable",
+    ["Starry"] = "Stable",
+    ["Darkknife"] = "Stable",
+    ["Gingerbread"] = "Stable",
+    ["Mummy"] = "Stable",
+	["Zombified Knife"] = "Stable",
+    ["Bones"] = "Stable",
+    ["Gingerbread Knife"] = "Stable",
+    ["Brains"] = "Stable",
+    ["Sweater Knife"] = "Stable",
+    ["Branches"] = "Stable",
+    ["Frozen Gun"] = "Stable",
+    ["Lights Gun"] = "Stable",
+    ["Mummy Gun"] = "Stable",
+    ["Zombie Gun"] = "Stable",
+    ["Potion Knife"] = "Stable",
+    ["Zombified Gun"] = "Stable",
+    ["Potion"] = "Stable",
+    ["Void"] = "Stable",
+    ["Frozen Knife"] = "Stable",
+    ["Gingerbread Gun"] = "Stable",
+    ["Zombie Knife"] = "Stable",
+    ["Lights Knife"] = "Stable",
+    ["Mummy Knife"] = "Stable",
+    ["Moons"] = "Stable",
+    ["Webs"] = "Stable",
+    ["Holly Gun"] = "Stable",
+    ["Wolf"] = "Stable",
+    ["Nutcracker"] = "Stable",
+    ["Snowman Gun"] = "Stable",
+    ["Snowman Knife"] = "Stable",
+    ["Snowy"] = "Stable",
+    ["Wrapped Gun"] = "Stable",
+    ["Wrapped Knife"] = "Stable",
+    ["Gifted"] = "Stable",
+	["Glitch2"] = "Stable",
+    ["Glitch1"] = "Stable",
+    ["Gifts"] = "Stable",
+    ["Pine"] = "Stable",
+    ["Sparkle9"] = "Stable",
+    ["Sparkle8"] = "Stable",
+    ["Sparkle10"] = "Stable",
+    ["Ghoulish"] = "Stable",
+    ["Skool"] = "Stable",
+    ["Sparkle7"] = "Stable",
+    ["RIP"] = "Stable",
+    ["Tailslide"] = "Stable",
+    ["Coal"] = "Stable",
+    ["Ollie"] = "Stable",
+    ["Sidewinder"] = "Stable",
+    ["Sparkle5"] = "Stable",
+    ["Elf"] = "Stable",
+    ["Grave"] = "Stable",
+    ["CandyCorn"] = "Stable",
+    ["Sparkle4"] = "Stable",
+    ["Asteroid"] = "Stable",
+    ["Euro"] = "Stable",
+    ["Slime"] = "Stable",
+    ["Grind"] = "Stable",
+    ["Haunted"] = "Stable",
+    ["Combat II"] = "Stable",
+    ["Prism"] = "Stable",
+    ["Zombie"] = "Stable",
+    ["Snowman"] = "Stable",
+    ["Wrapped"] = "Stable",
+    ["Neon"] = "Stable",
+    ["Ecto"] = "Stable",
+    ["Witch"] = "Stable",
+    ["Indy"] = "Stable",
+    ["Hearts"] = "Stable",
+    ["Tulip"] = "Stable",
+    ["Goo"] = "Stable",
+    ["Patrick"] = "Stable",
+    ["Reptile"] = "Stable",
+    ["Bunny"] = "Stable",
+    ["Choco"] = "Stable",
+    ["Roses"] = "Stable",
+    ["Alex"] = "Stable",
+    ["Corl"] = "Stable",
+    ["Denis"] = "Stable",
+    ["Ornament1"] = "Stable",
+    ["Ornament2"] = "Stable",
+    ["Passion"] = "Stable",
+    ["Sketchy"] = "Stable",
+    ["Sub"] = "Stable",
+    ["Sweetheart"] = "Stable",
+    ["Valentine"] = "Stable",
+    ["2015"] = "Stable",
+    ["Santa"] = "Stable",
+    ["Infected"] = "Stable",
+    ["TNL"] = "Stable",
+	["Zombie Dog"] = "Stable",
+    ["Blue Pumpkin"] = "Stable",
+    ["Black Cat"] = "Stable",
+    ["Dogey"] = "Stable",
+    ["Red Pumpkin"] = "Stable",
+    ["Green Pumpkin"] = "Stable",
+    ["Jetstream"] = "Underpaid, 5",
+    ["Purple Pumpkin"] = "Stable",
+    ["Vampire Bat"] = "Stable",
+    ["Rudolph"] = "Stable",
+    ["Eyeball"] = "Stable",
+    ["Overseer Eye"] = "Stable",
+    ["Nobledragon"] = "Stable",
+    ["Pumpkin"] = "Stable",
+    ["Piggy"] = "Stable",
+    ["Reindeer"] = "Stable",
+    ["Fairy"] = "Stable",
+    ["Seahorsey"] = "Stable",
+    ["Chilly"] = "Stable",
+    ["Pengy"] = "Stable",
+    ["Tankie"] = "Underpaid, 5",
+    ["<3"] = "Stable",
+    ["Mechbug"] = "Stable",
+    ["UFO"] = "Underpaid, 3",
+    ["Deathspeaker"] = "Stable",
+    ["Phoenix"] = "Stable",
+    ["Frostbird"] = "Stable",
+    ["Electro"] = "Stable",
+    ["Sammy"] = "Stable",
+    ["Steambird"] = "Stable",
+    ["Badger"] = "Stable",
+    ["Ice Phoenix"] = "Stable",
+    ["Skelly"] = "Stable",
+    ["Traveller"] = "Stable",
+    ["Fire Bat"] = "Stable",
+    ["Fire Cat"] = "Stable",
+    ["Fire Bear"] = "Stable",
+    ["Fire Bunny"] = "Stable",
+    ["Fire Dog"] = "Stable",
+    ["Fire Fox"] = "Stable",
+    ["Fire Pig"] = "Stable",
+    ["Ghosty"] = "Stable",
+	["Chroma Fire Bunny"] = "Underpaid, 5-7",
+    ["Chroma Fire Cat"] = "Underpaid, 5-7",
+    ["Chroma Fire Dog"] = "Underpaid, 5-7",
+    ["Chroma Fire Fox"] = "Underpaid, 5-7",
+    ["Chroma Fire Bat"] = "Underpaid, 5-7",
+    ["Chroma Fire Pig"] = "Underpaid, 5-7",
+    ["Chroma Fire Bear"] = "Underpaid, 5-7",
+}
  
 local LP = game:GetService("Players").LocalPlayer
 local PG = LP:WaitForChild("PlayerGui", 5)
@@ -393,6 +782,37 @@ local function GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
     return nil
 end
 
+-- Функция для получения стабильности скина
+local function GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
+    if IS_CHROMA then
+        local CHROMA_NAME = "Chroma " .. ITEM_NAME
+        if stabilityValues and stabilityValues[CHROMA_NAME] then
+            return stabilityValues[CHROMA_NAME]
+        end
+    end
+    if stabilityValues then
+        return stabilityValues[ITEM_NAME]
+    end
+    return nil
+end
+
+-- Функция для извлечения статуса из полной строки (например "Underpaid, 225" -> "Underpaid")
+local function GET_STATUS_FROM_STRING(FULL_STRING)
+    if not FULL_STRING then return nil end
+    -- Берём первое слово до запятой или пробела
+    local status = string.match(FULL_STRING, "^(%w+)")
+    return status
+end
+
+-- Функция для получения цвета стабильности
+local function GET_STABILITY_COLOR(FULL_STRING)
+    local status = GET_STATUS_FROM_STRING(FULL_STRING)
+    if status and stabilityColors[status] then
+        return stabilityColors[status]
+    end
+    return stabilityColors["Unknown"]
+end
+
 -- Функция для создания текстовых меток стоимости
 local function CREATE_VALUE_LABEL(PARENT)
     local valueLabel = Instance.new("TextLabel")
@@ -406,6 +826,31 @@ local function CREATE_VALUE_LABEL(PARENT)
     valueLabel.Font = Enum.Font.GothamBold
     valueLabel.Parent = PARENT
     return valueLabel
+end
+
+-- Функция для создания текстовых меток стабильности
+local function CREATE_STABILITY_LABEL(PARENT)
+    local stabilityLabel = Instance.new("TextLabel")
+    stabilityLabel.Name = "StabilityLabel"
+    stabilityLabel.Size = UDim2.new(1, 0, 0.12, 0)
+    stabilityLabel.Position = UDim2.new(0, 0, 0.55, 0)
+    stabilityLabel.BackgroundTransparency = 0.5
+    stabilityLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    stabilityLabel.TextScaled = true
+    stabilityLabel.Font = Enum.Font.GothamBold
+    stabilityLabel.Parent = PARENT
+    return stabilityLabel
+end
+
+-- Функция для обновления метки стабильности с правильным цветом
+local function UPDATE_STABILITY_LABEL(LABEL, STABILITY)
+    if STABILITY then
+        LABEL.Text = STABILITY
+        LABEL.TextColor3 = GET_STABILITY_COLOR(STABILITY)
+    else
+        LABEL.Text = "Unknown"
+        LABEL.TextColor3 = GET_STABILITY_COLOR("Unknown")
+    end
 end
 
 local function SETUP_TRADE_GUI(TG)
@@ -463,6 +908,8 @@ local function SETUP_TRADE_GUI(TG)
                         end
      
                         local ITEM_VALUE = GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
+                        local ITEM_STABILITY = GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
+                        
                         if ITEM_VALUE then
                             YOUR_TOTAL_VALUE = YOUR_TOTAL_VALUE + (ITEM_VALUE * AMOUNT)
                             
@@ -472,16 +919,31 @@ local function SETUP_TRADE_GUI(TG)
                                 VALUE_LABEL = CREATE_VALUE_LABEL(NEW_ITEM)
                             end
                             VALUE_LABEL.Text = "Value: " .. (ITEM_VALUE * AMOUNT)
+                            
+                            -- Показываем стабильность скина
+                            local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
+                            if not STABILITY_LABEL then
+                                STABILITY_LABEL = CREATE_STABILITY_LABEL(NEW_ITEM)
+                            end
+                            UPDATE_STABILITY_LABEL(STABILITY_LABEL, ITEM_STABILITY)
                         else
                             local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
                             if VALUE_LABEL then
                                 VALUE_LABEL:Destroy()
+                            end
+                            local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
+                            if STABILITY_LABEL then
+                                STABILITY_LABEL:Destroy()
                             end
                         end
                     else
                         local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
                         if VALUE_LABEL then
                             VALUE_LABEL:Destroy()
+                        end
+                        local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
+                        if STABILITY_LABEL then
+                            STABILITY_LABEL:Destroy()
                         end
                     end
                 end
@@ -490,6 +952,10 @@ local function SETUP_TRADE_GUI(TG)
                     local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
                     if VALUE_LABEL then
                         VALUE_LABEL:Destroy()
+                    end
+                    local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
+                    if STABILITY_LABEL then
+                        STABILITY_LABEL:Destroy()
                     end
                 end
             end
@@ -525,6 +991,8 @@ local function SETUP_TRADE_GUI(TG)
                         end
      
                         local ITEM_VALUE = GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
+                        local ITEM_STABILITY = GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
+                        
                         if ITEM_VALUE then
                             THEIR_TOTAL_VALUE = THEIR_TOTAL_VALUE + (ITEM_VALUE * AMOUNT)
                             
@@ -534,16 +1002,31 @@ local function SETUP_TRADE_GUI(TG)
                                 VALUE_LABEL = CREATE_VALUE_LABEL(NEW_ITEM)
                             end
                             VALUE_LABEL.Text = "Value: " .. (ITEM_VALUE * AMOUNT)
+                            
+                            -- Показываем стабильность скина
+                            local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
+                            if not STABILITY_LABEL then
+                                STABILITY_LABEL = CREATE_STABILITY_LABEL(NEW_ITEM)
+                            end
+                            UPDATE_STABILITY_LABEL(STABILITY_LABEL, ITEM_STABILITY)
                         else
                             local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
                             if VALUE_LABEL then
                                 VALUE_LABEL:Destroy()
+                            end
+                            local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
+                            if STABILITY_LABEL then
+                                STABILITY_LABEL:Destroy()
                             end
                         end
                     else
                         local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
                         if VALUE_LABEL then
                             VALUE_LABEL:Destroy()
+                        end
+                        local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
+                        if STABILITY_LABEL then
+                            STABILITY_LABEL:Destroy()
                         end
                     end
                 end
@@ -552,6 +1035,10 @@ local function SETUP_TRADE_GUI(TG)
                     local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
                     if VALUE_LABEL then
                         VALUE_LABEL:Destroy()
+                    end
+                    local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
+                    if STABILITY_LABEL then
+                        STABILITY_LABEL:Destroy()
                     end
                 end
             end
@@ -643,7 +1130,7 @@ game.StarterGui:SetCore("SendNotification", {
     Title = "Trade Helper";
     Text = "Cracked by: Who? D A R K";
     Icon = "";
-    Duration = 5;
+    Duration = 1;
     Button1 = "Supreme Values";
     Callback = NotificationBindable;
 })

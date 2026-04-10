@@ -378,9 +378,9 @@ local ancientValues = {
 
 -- Цвета для статусов стабильности
 local stabilityColors = {
-    ["Stable"] = Color3.fromRGB(0, 255, 100),      -- Зелёный
+    ["Stable"] = Color3.fromRGB(0, 255, 0),      -- Зелёный
     ["Rising"] = Color3.fromRGB(0, 0, 255),      -- Синий
-    ["Dropping"] = Color3.fromRGB(255, 50, 50),    -- Красный
+    ["Dropping"] = Color3.fromRGB(255, 0, 0),    -- Красный
     ["Unstable"] = Color3.fromRGB(180, 0, 255),    -- Фиолетовый
     ["Underpaid"] = Color3.fromRGB(255, 165, 0),   -- Оранжевый
     ["Overpaid"] = Color3.fromRGB(255, 255, 0),    -- Жёлтый
@@ -1130,7 +1130,7 @@ game.StarterGui:SetCore("SendNotification", {
     Title = "Trade Helper";
     Text = "Cracked by: Who? D A R K";
     Icon = "";
-    Duration = 1;
+    Duration = 0.5;
     Button1 = "Supreme Values";
     Callback = NotificationBindable;
 })

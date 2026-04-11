@@ -458,7 +458,7 @@ local stabilityValues = {
 	["Phantom"] = "Stable",
 	["Spectre"] = "Stable",
 	["Lightbringer"] = "Stable",
-    ["Ornament"] = "Underpaid, 30",
+    ["Ornament"] = "Stable",
 	["Swirly Blade"] = "Stable",
 	["Green Luger"] = "Stable",
 	["Hallowgun"] = "Stable",
@@ -769,51 +769,108 @@ local LP = game:GetService("Players").LocalPlayer
 local PG = LP:WaitForChild("PlayerGui", 5)
 if not PG then return end
 
+local SUPREME_URLS = {
+    "https://supremevalues.com/mm2/ancients",
+    "https://supremevalues.com/mm2/chromas",
+    "https://supremevalues.com/mm2/godlies",
+}
+
+local function HTML_DECODE(TEXT)
+    if not TEXT then
+        return ""
+    end
+
+    TEXT = TEXT:gsub("&#039;", "'")
+    TEXT = TEXT:gsub("&quot;", '"')
+    TEXT = TEXT:gsub("&amp;", "&")
+    TEXT = TEXT:gsub("&lt;", "<")
+    TEXT = TEXT:gsub("&gt;", ">")
+    TEXT = TEXT:gsub("&nbsp;", " ")
+    return TEXT
+end
+
+local function NORMALIZE_DISPLAY_NAME(NAME)
+    NAME = HTML_DECODE(NAME)
+    NAME = NAME:gsub("<.->", "")
+    NAME = NAME:gsub("^%s+", "")
+    NAME = NAME:gsub("%s+$", "")
+    NAME = NAME:gsub("%s+", " ")
+
+    -- Сайт иногда сокращает chroma-предметы как "C. ..."
+    NAME = NAME:gsub("^C%.%s*", "Chroma ")
+
+    -- Подстраховка на случай вариантов без апострофов
+    NAME = NAME:gsub("^Travelers ", "Traveler's ")
+    NAME = NAME:gsub("^Vampires ", "Vampire's ")
+    NAME = NAME:gsub("^Winters ", "Winter's ")
+    NAME = NAME:gsub("^Hallows ", "Hallow's ")
+
+    return NAME
+end
+
+local function NORMALIZE_LOOKUP_NAME(NAME)
+    return string.lower(NORMALIZE_DISPLAY_NAME(NAME))
+end
+
+local ITEM_VALUES = {}
+
+local function REBUILD_FALLBACK_VALUES()
+    ITEM_VALUES = {}
+
+    for NAME, VALUE in pairs(ancientValues) do
+        ITEM_VALUES[NORMALIZE_LOOKUP_NAME(NAME)] = VALUE
+    end
+end
+
+local function PARSE_PAGE_VALUES(HTML)
+    local COUNT = 0
+
+    for RAW_VALUE, RAW_NAME in HTML:gmatch('data%-value="([%d,]+)".-data%-name=\'(.-)\'') do
+        local VALUE = tonumber((RAW_VALUE:gsub(",", "")))
+        local NAME = NORMALIZE_DISPLAY_NAME(RAW_NAME)
+
+        if VALUE and NAME ~= "" then
+            ITEM_VALUES[NORMALIZE_LOOKUP_NAME(NAME)] = VALUE
+            COUNT = COUNT + 1
+        end
+    end
+
+    return COUNT
+end
+
+local function REFRESH_VALUES_FROM_SUPREME()
+    REBUILD_FALLBACK_VALUES()
+
+    local TOTAL_PARSED = 0
+
+    for _, URL in ipairs(SUPREME_URLS) do
+        local OK, HTML = pcall(function()
+            return game:HttpGet(URL)
+        end)
+
+        if OK and HTML and HTML ~= "" then
+            TOTAL_PARSED = TOTAL_PARSED + PARSE_PAGE_VALUES(HTML)
+        end
+    end
+
+    return TOTAL_PARSED
+end
+
 local function GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
-    if IS_CHROMA then
-        local CHROMA_NAME = "Chroma " .. ITEM_NAME
-        if ancientValues and ancientValues[CHROMA_NAME] then
-            return ancientValues[CHROMA_NAME]
-        end
-    end
-    if ancientValues then
-        return ancientValues[ITEM_NAME]
-    end
-    return nil
-end
+    local LOOKUP_NAME = ITEM_NAME
 
-local function GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
-    if IS_CHROMA then
-        local CHROMA_NAME = "Chroma " .. ITEM_NAME
-        if stabilityValues and stabilityValues[CHROMA_NAME] then
-            return stabilityValues[CHROMA_NAME]
-        end
+    if IS_CHROMA and not ITEM_NAME:match("^Chroma%s+") and not ITEM_NAME:match("^C%.%s*") then
+        LOOKUP_NAME = "Chroma " .. ITEM_NAME
     end
-    if stabilityValues then
-        return stabilityValues[ITEM_NAME]
-    end
-    return nil
-end
 
-local function GET_STATUS_FROM_STRING(FULL_STRING)
-    if not FULL_STRING then return nil end
-    local status = string.match(FULL_STRING, "^(%w+)")
-    return status
-end
-
-local function GET_STABILITY_COLOR(FULL_STRING)
-    local status = GET_STATUS_FROM_STRING(FULL_STRING)
-    if status and stabilityColors[status] then
-        return stabilityColors[status]
-    end
-    return stabilityColors["Unknown"]
+    return ITEM_VALUES[NORMALIZE_LOOKUP_NAME(LOOKUP_NAME)]
 end
 
 local function CREATE_VALUE_LABEL(PARENT)
     local valueLabel = Instance.new("TextLabel")
     valueLabel.Name = "ValueLabel"
     valueLabel.Size = UDim2.new(1, 0, 0.15, 0)
-    valueLabel.Position = UDim2.new(0, 0, 0.40, 0)
+    valueLabel.Position = UDim2.new(0, 0, 0.46, 0)
     valueLabel.BackgroundTransparency = 0.5
     valueLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     valueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -823,38 +880,10 @@ local function CREATE_VALUE_LABEL(PARENT)
     return valueLabel
 end
 
-local function CREATE_STABILITY_LABEL(PARENT)
-    local stabilityLabel = Instance.new("TextLabel")
-    stabilityLabel.Name = "StabilityLabel"
-    stabilityLabel.Size = UDim2.new(1, 0, 0.12, 0)
-    stabilityLabel.Position = UDim2.new(0, 0, 0.55, 0)
-    stabilityLabel.BackgroundTransparency = 0.5
-    stabilityLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    stabilityLabel.TextScaled = true
-    stabilityLabel.Font = Enum.Font.GothamBold
-    stabilityLabel.Parent = PARENT
-    return stabilityLabel
-end
-
-local function UPDATE_STABILITY_LABEL(LABEL, STABILITY)
-    if STABILITY then
-        LABEL.Text = STABILITY
-        LABEL.TextColor3 = GET_STABILITY_COLOR(STABILITY)
-    else
-        LABEL.Text = "Unknown"
-        LABEL.TextColor3 = GET_STABILITY_COLOR("Unknown")
-    end
-end
-
 local function CLEAR_ITEM_LABELS(ITEM_FRAME)
     local VALUE_LABEL = ITEM_FRAME:FindFirstChild("ValueLabel")
     if VALUE_LABEL then
         VALUE_LABEL:Destroy()
-    end
-
-    local STABILITY_LABEL = ITEM_FRAME:FindFirstChild("StabilityLabel")
-    if STABILITY_LABEL then
-        STABILITY_LABEL:Destroy()
     end
 end
 
@@ -920,8 +949,6 @@ local function UPDATE_ITEM_DISPLAY(ITEM_FRAME)
     end
 
     local ITEM_VALUE = GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
-    local ITEM_STABILITY = GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
-
     if not ITEM_VALUE then
         CLEAR_ITEM_LABELS(ITEM_FRAME)
         return 0
@@ -931,14 +958,8 @@ local function UPDATE_ITEM_DISPLAY(ITEM_FRAME)
     if not VALUE_LABEL then
         VALUE_LABEL = CREATE_VALUE_LABEL(ITEM_FRAME)
     end
+
     VALUE_LABEL.Text = "Value: " .. (ITEM_VALUE * AMOUNT)
-
-    local STABILITY_LABEL = ITEM_FRAME:FindFirstChild("StabilityLabel")
-    if not STABILITY_LABEL then
-        STABILITY_LABEL = CREATE_STABILITY_LABEL(ITEM_FRAME)
-    end
-    UPDATE_STABILITY_LABEL(STABILITY_LABEL, ITEM_STABILITY)
-
     return ITEM_VALUE * AMOUNT
 end
 
@@ -1093,6 +1114,8 @@ local function SETUP_INVENTORY_GUI()
     end)
 end
 
+local PARSED_COUNT = REFRESH_VALUES_FROM_SUPREME()
+
 local TG = PG:WaitForChild("TradeGUI", 5)
 if TG then
     SETUP_TRADE_GUI(TG)
@@ -1116,9 +1139,9 @@ NotificationBindable.OnInvoke = callback
 
 game.StarterGui:SetCore("SendNotification", {
     Title = "Trade Helper";
-    Text = "Cracked by: Who? D A R K";
+    Text = "Values synced: " .. tostring(PARSED_COUNT);
     Icon = "";
-    Duration = 0.5;
+    Duration = 1.5;
     Button1 = "Supreme Values";
     Callback = NotificationBindable;
 })

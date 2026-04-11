@@ -768,7 +768,7 @@ local stabilityValues = {
 local LP = game:GetService("Players").LocalPlayer
 local PG = LP:WaitForChild("PlayerGui", 5)
 if not PG then return end
- 
+
 local function GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
     if IS_CHROMA then
         local CHROMA_NAME = "Chroma " .. ITEM_NAME
@@ -782,7 +782,6 @@ local function GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
     return nil
 end
 
--- Функция для получения стабильности скина
 local function GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
     if IS_CHROMA then
         local CHROMA_NAME = "Chroma " .. ITEM_NAME
@@ -796,15 +795,12 @@ local function GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
     return nil
 end
 
--- Функция для извлечения статуса из полной строки (например "Underpaid, 225" -> "Underpaid")
 local function GET_STATUS_FROM_STRING(FULL_STRING)
     if not FULL_STRING then return nil end
-    -- Берём первое слово до запятой или пробела
     local status = string.match(FULL_STRING, "^(%w+)")
     return status
 end
 
--- Функция для получения цвета стабильности
 local function GET_STABILITY_COLOR(FULL_STRING)
     local status = GET_STATUS_FROM_STRING(FULL_STRING)
     if status and stabilityColors[status] then
@@ -813,7 +809,6 @@ local function GET_STABILITY_COLOR(FULL_STRING)
     return stabilityColors["Unknown"]
 end
 
--- Функция для создания текстовых меток стоимости
 local function CREATE_VALUE_LABEL(PARENT)
     local valueLabel = Instance.new("TextLabel")
     valueLabel.Name = "ValueLabel"
@@ -828,7 +823,6 @@ local function CREATE_VALUE_LABEL(PARENT)
     return valueLabel
 end
 
--- Функция для создания текстовых меток стабильности
 local function CREATE_STABILITY_LABEL(PARENT)
     local stabilityLabel = Instance.new("TextLabel")
     stabilityLabel.Name = "StabilityLabel"
@@ -842,7 +836,6 @@ local function CREATE_STABILITY_LABEL(PARENT)
     return stabilityLabel
 end
 
--- Функция для обновления метки стабильности с правильным цветом
 local function UPDATE_STABILITY_LABEL(LABEL, STABILITY)
     if STABILITY then
         LABEL.Text = STABILITY
@@ -853,269 +846,264 @@ local function UPDATE_STABILITY_LABEL(LABEL, STABILITY)
     end
 end
 
+local function CLEAR_ITEM_LABELS(ITEM_FRAME)
+    local VALUE_LABEL = ITEM_FRAME:FindFirstChild("ValueLabel")
+    if VALUE_LABEL then
+        VALUE_LABEL:Destroy()
+    end
+
+    local STABILITY_LABEL = ITEM_FRAME:FindFirstChild("StabilityLabel")
+    if STABILITY_LABEL then
+        STABILITY_LABEL:Destroy()
+    end
+end
+
+local function PARSE_ITEM_AMOUNT(AMOUNT_TEXT)
+    if not AMOUNT_TEXT or AMOUNT_TEXT == "" then
+        return 1
+    end
+
+    local AMOUNT_NUM = tonumber(string.match(AMOUNT_TEXT, "^x(%d+)$"))
+    if AMOUNT_NUM then
+        return AMOUNT_NUM
+    end
+
+    return 1
+end
+
+local function GET_ITEM_UI_DATA(ITEM_FRAME)
+    local ITEM_NAME_OBJ = ITEM_FRAME:FindFirstChild("ItemName")
+    if not ITEM_NAME_OBJ then
+        return nil
+    end
+
+    local ITEM_NAME_LBL = ITEM_NAME_OBJ:FindFirstChild("Label")
+    if not ITEM_NAME_LBL or ITEM_NAME_LBL.Text == "" then
+        return nil
+    end
+
+    local AMOUNT = 1
+    local AMOUNT_CONT = ITEM_FRAME:FindFirstChild("Container")
+    if AMOUNT_CONT then
+        local AMOUNT_LBL = AMOUNT_CONT:FindFirstChild("Amount")
+        if AMOUNT_LBL then
+            AMOUNT = PARSE_ITEM_AMOUNT(AMOUNT_LBL.Text)
+        end
+    end
+
+    local IS_CHROMA = false
+    local TAGS = ITEM_FRAME:FindFirstChild("Tags")
+    if TAGS then
+        local CHROMA_TAG = TAGS:FindFirstChild("Chroma")
+        if CHROMA_TAG then
+            IS_CHROMA = CHROMA_TAG.Visible
+        end
+    end
+
+    return ITEM_NAME_LBL.Text, AMOUNT, IS_CHROMA
+end
+
+local function UPDATE_ITEM_DISPLAY(ITEM_FRAME)
+    if not ITEM_FRAME or not ITEM_FRAME:IsA("GuiObject") then
+        return 0
+    end
+
+    if not ITEM_FRAME.Visible then
+        CLEAR_ITEM_LABELS(ITEM_FRAME)
+        return 0
+    end
+
+    local ITEM_NAME, AMOUNT, IS_CHROMA = GET_ITEM_UI_DATA(ITEM_FRAME)
+    if not ITEM_NAME then
+        CLEAR_ITEM_LABELS(ITEM_FRAME)
+        return 0
+    end
+
+    local ITEM_VALUE = GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
+    local ITEM_STABILITY = GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
+
+    if not ITEM_VALUE then
+        CLEAR_ITEM_LABELS(ITEM_FRAME)
+        return 0
+    end
+
+    local VALUE_LABEL = ITEM_FRAME:FindFirstChild("ValueLabel")
+    if not VALUE_LABEL then
+        VALUE_LABEL = CREATE_VALUE_LABEL(ITEM_FRAME)
+    end
+    VALUE_LABEL.Text = "Value: " .. (ITEM_VALUE * AMOUNT)
+
+    local STABILITY_LABEL = ITEM_FRAME:FindFirstChild("StabilityLabel")
+    if not STABILITY_LABEL then
+        STABILITY_LABEL = CREATE_STABILITY_LABEL(ITEM_FRAME)
+    end
+    UPDATE_STABILITY_LABEL(STABILITY_LABEL, ITEM_STABILITY)
+
+    return ITEM_VALUE * AMOUNT
+end
+
+local function HOOK_ITEM_FRAME(ITEM_FRAME, UPDATE_CALLBACK)
+    if not ITEM_FRAME or ITEM_FRAME:GetAttribute("TradeHelperHooked") then
+        return
+    end
+
+    ITEM_FRAME:SetAttribute("TradeHelperHooked", true)
+    ITEM_FRAME:GetPropertyChangedSignal("Visible"):Connect(UPDATE_CALLBACK)
+
+    local ITEM_NAME_OBJ = ITEM_FRAME:FindFirstChild("ItemName")
+    if ITEM_NAME_OBJ then
+        local ITEM_NAME_LBL = ITEM_NAME_OBJ:FindFirstChild("Label")
+        if ITEM_NAME_LBL then
+            ITEM_NAME_LBL:GetPropertyChangedSignal("Text"):Connect(UPDATE_CALLBACK)
+        end
+    end
+
+    local AMOUNT_CONT = ITEM_FRAME:FindFirstChild("Container")
+    if AMOUNT_CONT then
+        local AMOUNT_LBL = AMOUNT_CONT:FindFirstChild("Amount")
+        if AMOUNT_LBL then
+            AMOUNT_LBL:GetPropertyChangedSignal("Text"):Connect(UPDATE_CALLBACK)
+        end
+    end
+
+    local TAGS = ITEM_FRAME:FindFirstChild("Tags")
+    if TAGS then
+        local CHROMA_TAG = TAGS:FindFirstChild("Chroma")
+        if CHROMA_TAG then
+            CHROMA_TAG:GetPropertyChangedSignal("Visible"):Connect(UPDATE_CALLBACK)
+        end
+    end
+end
+
 local function SETUP_TRADE_GUI(TG)
     local CONT = TG:WaitForChild("Container", 5)
     if not CONT then return end
-     
+
     local TR = CONT:WaitForChild("Trade", 5)
     if not TR then return end
-     
+
     local YO = TR:WaitForChild("YourOffer", 5)
     if not YO then return end
-     
+
     local YOC = YO:WaitForChild("Container", 5)
     if not YOC then return end
-     
+
     local YOT = YO:WaitForChild("Title", 5)
     if not YOT then return end
-     
+
     local TO = TR:WaitForChild("TheirOffer", 5)
     if not TO then return end
-     
+
     local TOC = TO:WaitForChild("Container", 5)
     if not TOC then return end
-     
+
     local TOT = TO:WaitForChild("Title", 5)
     if not TOT then return end
-     
+
     local function UPDATE_OFFER_VALUES()
         local YOUR_TOTAL_VALUE = 0
         for I = 1, 4 do
-            local NEW_ITEM = YOC:WaitForChild("NewItem" .. I, 5)
-            if NEW_ITEM and NEW_ITEM.Visible then
-                local ITEM_NAME_OBJ = NEW_ITEM:WaitForChild("ItemName", 5)
-                local AMOUNT_CONT = NEW_ITEM:WaitForChild("Container", 5)
-                local TAGS = NEW_ITEM:WaitForChild("Tags", 5)
-                local CHROMA_TAG = TAGS:WaitForChild("Chroma", 5)
-     
-                if ITEM_NAME_OBJ and AMOUNT_CONT and TAGS and CHROMA_TAG then
-                    local ITEM_NAME_LBL = ITEM_NAME_OBJ:WaitForChild("Label", 5)
-                    local AMOUNT_LBL = AMOUNT_CONT:WaitForChild("Amount", 5)
-                    local IS_CHROMA = CHROMA_TAG.Visible
-     
-                    if ITEM_NAME_LBL and ITEM_NAME_LBL.Text ~= "" then
-                        local ITEM_NAME = ITEM_NAME_LBL.Text
-                        local AMOUNT = 1
-     
-                        if AMOUNT_LBL and AMOUNT_LBL.Text ~= "" then
-                            local AMOUNT_TEXT = AMOUNT_LBL.Text
-                            if string.sub(AMOUNT_TEXT, 1, 1) == "x" then
-                                local AMOUNT_NUM = tonumber(string.sub(AMOUNT_TEXT, 2))
-                                if AMOUNT_NUM then
-                                    AMOUNT = AMOUNT_NUM
-                                end
-                            end
-                        end
-     
-                        local ITEM_VALUE = GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
-                        local ITEM_STABILITY = GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
-                        
-                        if ITEM_VALUE then
-                            YOUR_TOTAL_VALUE = YOUR_TOTAL_VALUE + (ITEM_VALUE * AMOUNT)
-                            
-                            -- Показываем стоимость отдельного скина
-                            local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
-                            if not VALUE_LABEL then
-                                VALUE_LABEL = CREATE_VALUE_LABEL(NEW_ITEM)
-                            end
-                            VALUE_LABEL.Text = "Value: " .. (ITEM_VALUE * AMOUNT)
-                            
-                            -- Показываем стабильность скина
-                            local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
-                            if not STABILITY_LABEL then
-                                STABILITY_LABEL = CREATE_STABILITY_LABEL(NEW_ITEM)
-                            end
-                            UPDATE_STABILITY_LABEL(STABILITY_LABEL, ITEM_STABILITY)
-                        else
-                            local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
-                            if VALUE_LABEL then
-                                VALUE_LABEL:Destroy()
-                            end
-                            local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
-                            if STABILITY_LABEL then
-                                STABILITY_LABEL:Destroy()
-                            end
-                        end
-                    else
-                        local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
-                        if VALUE_LABEL then
-                            VALUE_LABEL:Destroy()
-                        end
-                        local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
-                        if STABILITY_LABEL then
-                            STABILITY_LABEL:Destroy()
-                        end
-                    end
-                end
-            else
-                if NEW_ITEM then
-                    local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
-                    if VALUE_LABEL then
-                        VALUE_LABEL:Destroy()
-                    end
-                    local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
-                    if STABILITY_LABEL then
-                        STABILITY_LABEL:Destroy()
-                    end
-                end
+            local NEW_ITEM = YOC:FindFirstChild("NewItem" .. I)
+            if NEW_ITEM then
+                YOUR_TOTAL_VALUE = YOUR_TOTAL_VALUE + UPDATE_ITEM_DISPLAY(NEW_ITEM)
             end
         end
         YOT.Text = "Total Value: " .. YOUR_TOTAL_VALUE
-     
+
         local THEIR_TOTAL_VALUE = 0
         for I = 1, 4 do
-            local NEW_ITEM = TOC:WaitForChild("NewItem" .. I, 5)
-            if NEW_ITEM and NEW_ITEM.Visible then
-                local ITEM_NAME_OBJ = NEW_ITEM:WaitForChild("ItemName", 5)
-                local AMOUNT_CONT = NEW_ITEM:WaitForChild("Container", 5)
-                local TAGS = NEW_ITEM:WaitForChild("Tags", 5)
-                local CHROMA_TAG = TAGS:WaitForChild("Chroma", 5)
-     
-                if ITEM_NAME_OBJ and AMOUNT_CONT and TAGS and CHROMA_TAG then
-                    local ITEM_NAME_LBL = ITEM_NAME_OBJ:WaitForChild("Label", 5)
-                    local AMOUNT_LBL = AMOUNT_CONT:WaitForChild("Amount", 5)
-                    local IS_CHROMA = CHROMA_TAG.Visible
-     
-                    if ITEM_NAME_LBL and ITEM_NAME_LBL.Text ~= "" then
-                        local ITEM_NAME = ITEM_NAME_LBL.Text
-                        local AMOUNT = 1
-     
-                        if AMOUNT_LBL and AMOUNT_LBL.Text ~= "" then
-                            local AMOUNT_TEXT = AMOUNT_LBL.Text
-                            if string.sub(AMOUNT_TEXT, 1, 1) == "x" then
-                                local AMOUNT_NUM = tonumber(string.sub(AMOUNT_TEXT, 2))
-                                if AMOUNT_NUM then
-                                    AMOUNT = AMOUNT_NUM
-                                end
-                            end
-                        end
-     
-                        local ITEM_VALUE = GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
-                        local ITEM_STABILITY = GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
-                        
-                        if ITEM_VALUE then
-                            THEIR_TOTAL_VALUE = THEIR_TOTAL_VALUE + (ITEM_VALUE * AMOUNT)
-                            
-                            -- Показываем стоимость отдельного скина
-                            local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
-                            if not VALUE_LABEL then
-                                VALUE_LABEL = CREATE_VALUE_LABEL(NEW_ITEM)
-                            end
-                            VALUE_LABEL.Text = "Value: " .. (ITEM_VALUE * AMOUNT)
-                            
-                            -- Показываем стабильность скина
-                            local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
-                            if not STABILITY_LABEL then
-                                STABILITY_LABEL = CREATE_STABILITY_LABEL(NEW_ITEM)
-                            end
-                            UPDATE_STABILITY_LABEL(STABILITY_LABEL, ITEM_STABILITY)
-                        else
-                            local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
-                            if VALUE_LABEL then
-                                VALUE_LABEL:Destroy()
-                            end
-                            local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
-                            if STABILITY_LABEL then
-                                STABILITY_LABEL:Destroy()
-                            end
-                        end
-                    else
-                        local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
-                        if VALUE_LABEL then
-                            VALUE_LABEL:Destroy()
-                        end
-                        local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
-                        if STABILITY_LABEL then
-                            STABILITY_LABEL:Destroy()
-                        end
-                    end
-                end
-            else
-                if NEW_ITEM then
-                    local VALUE_LABEL = NEW_ITEM:FindFirstChild("ValueLabel")
-                    if VALUE_LABEL then
-                        VALUE_LABEL:Destroy()
-                    end
-                    local STABILITY_LABEL = NEW_ITEM:FindFirstChild("StabilityLabel")
-                    if STABILITY_LABEL then
-                        STABILITY_LABEL:Destroy()
-                    end
-                end
+            local NEW_ITEM = TOC:FindFirstChild("NewItem" .. I)
+            if NEW_ITEM then
+                THEIR_TOTAL_VALUE = THEIR_TOTAL_VALUE + UPDATE_ITEM_DISPLAY(NEW_ITEM)
             end
         end
         TOT.Text = "Total Value: " .. THEIR_TOTAL_VALUE
-     
+
         if THEIR_TOTAL_VALUE > 0 then
             local PROFIT = THEIR_TOTAL_VALUE - YOUR_TOTAL_VALUE
             YOT.Text = YOT.Text .. " (Profit: " .. PROFIT .. ")"
         end
     end
-     
-    -- Run the update function initially
+
     UPDATE_OFFER_VALUES()
-     
-    -- Listen for changes in Your Offer
+
     for I = 1, 4 do
-        local NEW_ITEM = YOC:WaitForChild("NewItem" .. I, 5)
+        local NEW_ITEM = YOC:FindFirstChild("NewItem" .. I)
         if NEW_ITEM then
-            NEW_ITEM:GetPropertyChangedSignal("Visible"):Connect(UPDATE_OFFER_VALUES)
-            local ITEM_NAME_OBJ = NEW_ITEM:WaitForChild("ItemName", 5)
-            local AMOUNT_CONT = NEW_ITEM:WaitForChild("Container", 5)
-            local TAGS = NEW_ITEM:WaitForChild("Tags", 5)
-            if ITEM_NAME_OBJ and AMOUNT_CONT and TAGS then
-                local ITEM_NAME_LBL = ITEM_NAME_OBJ:WaitForChild("Label", 5)
-                local AMOUNT_LBL = AMOUNT_CONT:WaitForChild("Amount", 5)
-                local CHROMA_TAG = TAGS:WaitForChild("Chroma", 5)
-                if ITEM_NAME_LBL then
-                    ITEM_NAME_LBL:GetPropertyChangedSignal("Text"):Connect(UPDATE_OFFER_VALUES)
-                end
-                if AMOUNT_LBL then
-                    AMOUNT_LBL:GetPropertyChangedSignal("Text"):Connect(UPDATE_OFFER_VALUES)
-                end
-                if CHROMA_TAG then
-                    CHROMA_TAG:GetPropertyChangedSignal("Visible"):Connect(UPDATE_OFFER_VALUES)
-                end
-            end
+            HOOK_ITEM_FRAME(NEW_ITEM, UPDATE_OFFER_VALUES)
         end
     end
-     
-    -- Listen for changes in Their Offer
+
     for I = 1, 4 do
-        local NEW_ITEM = TOC:WaitForChild("NewItem" .. I, 5)
+        local NEW_ITEM = TOC:FindFirstChild("NewItem" .. I)
         if NEW_ITEM then
-            NEW_ITEM:GetPropertyChangedSignal("Visible"):Connect(UPDATE_OFFER_VALUES)
-            local ITEM_NAME_OBJ = NEW_ITEM:WaitForChild("ItemName", 5)
-            local AMOUNT_CONT = NEW_ITEM:WaitForChild("Container", 5)
-            local TAGS = NEW_ITEM:WaitForChild("Tags", 5)
-            if ITEM_NAME_OBJ and AMOUNT_CONT and TAGS then
-                local ITEM_NAME_LBL = ITEM_NAME_OBJ:WaitForChild("Label", 5)
-                local AMOUNT_LBL = AMOUNT_CONT:WaitForChild("Amount", 5)
-                local CHROMA_TAG = TAGS:WaitForChild("Chroma", 5)
-                if ITEM_NAME_LBL then
-                    ITEM_NAME_LBL:GetPropertyChangedSignal("Text"):Connect(UPDATE_OFFER_VALUES)
-                end
-                if AMOUNT_LBL then
-                    AMOUNT_LBL:GetPropertyChangedSignal("Text"):Connect(UPDATE_OFFER_VALUES)
-                end
-                if CHROMA_TAG then
-                    CHROMA_TAG:GetPropertyChangedSignal("Visible"):Connect(UPDATE_OFFER_VALUES)
-                end
-            end
+            HOOK_ITEM_FRAME(NEW_ITEM, UPDATE_OFFER_VALUES)
         end
     end
 end
 
--- Setup for Desktop GUI
+local function IS_INVENTORY_OBJECT(OBJ)
+    local CURRENT = OBJ
+    while CURRENT and CURRENT ~= PG do
+        local LOWER_NAME = string.lower(CURRENT.Name)
+        if string.find(LOWER_NAME, "inventory", 1, true)
+            or string.find(LOWER_NAME, "weapon", 1, true)
+            or string.find(LOWER_NAME, "backpack", 1, true) then
+            return true
+        end
+        CURRENT = CURRENT.Parent
+    end
+    return false
+end
+
+local function TRY_SETUP_INVENTORY_ITEM(OBJ)
+    if not OBJ or not OBJ:IsA("GuiObject") then
+        return
+    end
+
+    if not IS_INVENTORY_OBJECT(OBJ) then
+        return
+    end
+
+    local ITEM_NAME_OBJ = OBJ:FindFirstChild("ItemName")
+    if not ITEM_NAME_OBJ then
+        return
+    end
+
+    local ITEM_NAME_LBL = ITEM_NAME_OBJ:FindFirstChild("Label")
+    if not ITEM_NAME_LBL then
+        return
+    end
+
+    local function UPDATE_THIS_ITEM()
+        UPDATE_ITEM_DISPLAY(OBJ)
+    end
+
+    HOOK_ITEM_FRAME(OBJ, UPDATE_THIS_ITEM)
+    UPDATE_THIS_ITEM()
+end
+
+local function SETUP_INVENTORY_GUI()
+    for _, OBJ in ipairs(PG:GetDescendants()) do
+        TRY_SETUP_INVENTORY_ITEM(OBJ)
+    end
+
+    PG.DescendantAdded:Connect(function(OBJ)
+        TRY_SETUP_INVENTORY_ITEM(OBJ)
+    end)
+end
+
 local TG = PG:WaitForChild("TradeGUI", 5)
 if TG then
     SETUP_TRADE_GUI(TG)
 end
 
--- Setup for Phone GUI
 local TG_PHONE = PG:WaitForChild("TradeGUI_Phone", 5)
 if TG_PHONE then
     SETUP_TRADE_GUI(TG_PHONE)
 end
+
+SETUP_INVENTORY_GUI()
 
 local function callback(Text)
     if Text == "Supreme Values" then

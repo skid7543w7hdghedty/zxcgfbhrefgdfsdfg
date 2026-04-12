@@ -2,11 +2,11 @@ local ancientValues = {
 	["Corrupt"] = 600,
     ["Gingerscope"] = 18500,
     ["Traveler's Axe"] = 7700,
-    ["Harvester"] = 330,
-    ["Celestial"] = 1750,
-    ["Icepiercer"] = 230,
+    ["Harvester"] = 320,
+    ["Celestial"] = 1725,
+    ["Icepiercer"] = 220,
     ["Vampire's Axe"] = 925,
-    ["Icebreaker"] = 105,
+    ["Icebreaker"] = 100,
     ["Swirly Axe"] = 52,
     ["Batwing"] = 50,
     ["Elderwood Scythe"] = 50,
@@ -17,24 +17,24 @@ local ancientValues = {
 	["Evergun"] = 3550,
 	["Turkey"] = 1825,
 	["Evergreen"] = 2700,
-	["Blossom"] = 1090,
-	["Sakura"] = 1080,
-	["Vampire's Gun"] = 1750,
-	["Constellation"] = 3000,
+	["Blossom"] = 1100,
+	["Sakura"] = 1090,
+	["Vampire's Gun"] = 1725,
+	["Constellation"] = 2950,
 	["Bauble"] = 925,
 	["Darkshot"] = 1200,
 	["Darksword"] = 1180,
     ["Bloom"] = 255,
     ["Flora"] = 265,
-    ["Treat"] = 230,
-    ["Heart Wand"] = 235,
-    ["Sweet"] = 225,
+    ["Treat"] = 225,
+    ["Heart Wand"] = 230,
+    ["Sweet"] = 220,
 	["Bat"] = 165,
-    ["Alienbeam"] = 1475,
-    ["Raygun"] = 975,
-    ["Sunrise"] = 725,
-    ["Sunset"] = 350,
-    ["Snowcannon"] = 550,
+    ["Alienbeam"] = 1550,
+    ["Raygun"] = 1025,
+    ["Sunrise"] = 750,
+    ["Sunset"] = 375,
+    ["Snowcannon"] = 575,
     ["Snow Dagger"] = 185,
     ["Blizzard"] = 150,
     ["Snowstorm"] = 150,
@@ -158,7 +158,7 @@ local ancientValues = {
     ["Chroma Lightbringer"] = 85,
     ["Chroma Luger"] = 57,
     ["Chroma Laser"] = 50,
-    ["Chroma Candleflame"] = 65,
+    ["Chroma Candleflame"] = 60,
     ["Chroma Elderwood Blade"] = 55,
     ["Chroma Swirly Gun"] = 55,
     ["Chroma Cookiecane"] = 50,
@@ -378,23 +378,23 @@ local ancientValues = {
 
 -- Цвета для статусов стабильности
 local stabilityColors = {
-    ["Stable"] = Color3.fromRGB(0, 255, 0),      -- Зелёный
-    ["Rising"] = Color3.fromRGB(0, 0, 255),      -- Синий
-    ["Dropping"] = Color3.fromRGB(255, 0, 0),    -- Красный
-    ["Unstable"] = Color3.fromRGB(180, 0, 255),    -- Фиолетовый
-    ["Underpaid"] = Color3.fromRGB(255, 165, 0),   -- Оранжевый
-    ["Overpaid"] = Color3.fromRGB(255, 255, 0),    -- Жёлтый
-    ["Unknown"] = Color3.fromRGB(150, 150, 150),   -- Серый
+    ["Stable"] = Color3.fromRGB(0, 255, 0),
+    ["Rising"] = Color3.fromRGB(0, 0, 255),
+    ["Dropping"] = Color3.fromRGB(255, 0, 0),
+    ["Unstable"] = Color3.fromRGB(180, 0, 255),
+    ["Underpaid"] = Color3.fromRGB(255, 165, 0),
+    ["Overpaid"] = Color3.fromRGB(255, 255, 0),
+    ["Unknown"] = Color3.fromRGB(150, 150, 150),
 }
 
--- Таблица стабильности скинов (можно писать "Underpaid, 225" или просто "Stable")
+-- Таблица стабильности скинов
 local stabilityValues = {
 	["Corrupt"] = "Stable",
     ["Gingerscope"] = "Stable",
     ["Traveler's Axe"] = "Stable",
-    ["Harvester"] = "Underpaid, 320",
+    ["Harvester"] = "Underpaid, 310",
     ["Celestial"] = "Stable",
-    ["Icepiercer"] = "Underpaid, 220",
+    ["Icepiercer"] = "Underpaid, 210",
     ["Vampire's Axe"] = "Stable",
     ["Icebreaker"] = "Stable",
     ["Swirly Axe"] = "Stable",
@@ -407,8 +407,8 @@ local stabilityValues = {
 	["Evergun"] = "Stable",
 	["Turkey"] = "Stable",
 	["Evergreen"] = "Stable",
-	["Blossom"] = "Rising, 1100",
-	["Sakura"] = "Rising, 1090",
+	["Blossom"] = "Stable",
+	["Sakura"] = "Stable",
 	["Vampire's Gun"] = "Stable",
 	["Constellation"] = "Stable",
 	["Bauble"] = "Stable",
@@ -416,15 +416,15 @@ local stabilityValues = {
 	["Darksword"] = "Stable",
     ["Bloom"] = "Stable",
     ["Flora"] = "Stable",
-    ["Treat"] = "Underpaid, 220",
-    ["Heart Wand"] = "Underpaid, 225",
-    ["Sweet"] = "Underpaid, 215",
+    ["Treat"] = "Underpaid, 215",
+    ["Heart Wand"] = "Underpaid, 220",
+    ["Sweet"] = "Underpaid, 210",
 	["Bat"] = "Stable",
-    ["Alienbeam"] = "Overpaid, 1550",
+    ["Alienbeam"] = "Overpaid, 1650",
     ["Raygun"] = "Rising, 1000",
-    ["Sunrise"] = "Rising, 750",
-    ["Sunset"] = "Rising, 375",
-    ["Snowcannon"] = "Stable",
+    ["Sunrise"] = "Stable",
+    ["Sunset"] = "Stable",
+    ["Snowcannon"] = "Rising, 600",
     ["Snow Dagger"] = "Stable",
     ["Blizzard"] = "Stable",
     ["Snowstorm"] = "Stable",
@@ -458,7 +458,7 @@ local stabilityValues = {
 	["Phantom"] = "Stable",
 	["Spectre"] = "Stable",
 	["Lightbringer"] = "Stable",
-    ["Ornament"] = "Stable",
+    ["Ornament"] = "Underpaid, 30",
 	["Swirly Blade"] = "Stable",
 	["Green Luger"] = "Stable",
 	["Hallowgun"] = "Stable",
@@ -532,7 +532,7 @@ local stabilityValues = {
     ["Chroma Bauble"] = "Stable",
     ["Chroma Constellation"] = "Stable",
     ["Chroma AlienBeam"] = "Stable",
-    ["Chroma Raygun"] = "Stable",
+    ["Chroma Raygun"] = "Rising, 1075",
     ["Chroma Treat"] = "Stable",
     ["Chroma Sweet"] = "Stable",
     ["Chroma Heart Wand"] = "Stable",
@@ -764,7 +764,13 @@ local stabilityValues = {
     ["Chroma Fire Pig"] = "Underpaid, 5-7",
     ["Chroma Fire Bear"] = "Underpaid, 5-7",
 }
- 
+
+-- Нормализованная таблица стабильности для поиска
+local STABILITY_LOOKUP = {}
+for NAME, VAL in pairs(stabilityValues) do
+    STABILITY_LOOKUP[string.lower(NAME)] = VAL
+end
+
 local LP = game:GetService("Players").LocalPlayer
 local PG = LP:WaitForChild("PlayerGui", 5)
 if not PG then return end
@@ -796,10 +802,8 @@ local function NORMALIZE_DISPLAY_NAME(NAME)
     NAME = NAME:gsub("%s+$", "")
     NAME = NAME:gsub("%s+", " ")
 
-    -- Сайт иногда сокращает chroma-предметы как "C. ..."
     NAME = NAME:gsub("^C%.%s*", "Chroma ")
 
-    -- Подстраховка на случай вариантов без апострофов
     NAME = NAME:gsub("^Travelers ", "Traveler's ")
     NAME = NAME:gsub("^Vampires ", "Vampire's ")
     NAME = NAME:gsub("^Winters ", "Winter's ")
@@ -866,11 +870,38 @@ local function GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
     return ITEM_VALUES[NORMALIZE_LOOKUP_NAME(LOOKUP_NAME)]
 end
 
+-- Функция получения стабильности предмета
+local function GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
+    local LOOKUP_NAME = ITEM_NAME
+
+    if IS_CHROMA and not ITEM_NAME:match("^Chroma%s+") and not ITEM_NAME:match("^C%.%s*") then
+        LOOKUP_NAME = "Chroma " .. ITEM_NAME
+    end
+
+    return STABILITY_LOOKUP[NORMALIZE_LOOKUP_NAME(LOOKUP_NAME)]
+end
+
+-- Извлечение статуса из строки стабильности (например "Underpaid" из "Underpaid, 220")
+local function GET_STATUS_FROM_STRING(FULL_STRING)
+    if not FULL_STRING then return nil end
+    local status = string.match(FULL_STRING, "^(%w+)")
+    return status
+end
+
+-- Получение цвета по строке стабильности
+local function GET_STABILITY_COLOR(FULL_STRING)
+    local status = GET_STATUS_FROM_STRING(FULL_STRING)
+    if status and stabilityColors[status] then
+        return stabilityColors[status]
+    end
+    return stabilityColors["Unknown"]
+end
+
 local function CREATE_VALUE_LABEL(PARENT)
     local valueLabel = Instance.new("TextLabel")
     valueLabel.Name = "ValueLabel"
     valueLabel.Size = UDim2.new(1, 0, 0.15, 0)
-    valueLabel.Position = UDim2.new(0, 0, 0.46, 0)
+    valueLabel.Position = UDim2.new(0, 0, 0.40, 0)
     valueLabel.BackgroundTransparency = 0.5
     valueLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     valueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -880,10 +911,40 @@ local function CREATE_VALUE_LABEL(PARENT)
     return valueLabel
 end
 
+-- Создание лейбла стабильности
+local function CREATE_STABILITY_LABEL(PARENT)
+    local stabilityLabel = Instance.new("TextLabel")
+    stabilityLabel.Name = "StabilityLabel"
+    stabilityLabel.Size = UDim2.new(1, 0, 0.12, 0)
+    stabilityLabel.Position = UDim2.new(0, 0, 0.55, 0)
+    stabilityLabel.BackgroundTransparency = 0.5
+    stabilityLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    stabilityLabel.TextScaled = true
+    stabilityLabel.Font = Enum.Font.GothamBold
+    stabilityLabel.Parent = PARENT
+    return stabilityLabel
+end
+
+-- Обновление лейбла стабильности
+local function UPDATE_STABILITY_LABEL(LABEL, STABILITY)
+    if STABILITY then
+        LABEL.Text = STABILITY
+        LABEL.TextColor3 = GET_STABILITY_COLOR(STABILITY)
+    else
+        LABEL.Text = "Unknown"
+        LABEL.TextColor3 = GET_STABILITY_COLOR("Unknown")
+    end
+end
+
 local function CLEAR_ITEM_LABELS(ITEM_FRAME)
     local VALUE_LABEL = ITEM_FRAME:FindFirstChild("ValueLabel")
     if VALUE_LABEL then
         VALUE_LABEL:Destroy()
+    end
+
+    local STABILITY_LABEL = ITEM_FRAME:FindFirstChild("StabilityLabel")
+    if STABILITY_LABEL then
+        STABILITY_LABEL:Destroy()
     end
 end
 
@@ -949,17 +1010,27 @@ local function UPDATE_ITEM_DISPLAY(ITEM_FRAME)
     end
 
     local ITEM_VALUE = GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
+    local ITEM_STABILITY = GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
+
     if not ITEM_VALUE then
         CLEAR_ITEM_LABELS(ITEM_FRAME)
         return 0
     end
 
+    -- Лейбл значения
     local VALUE_LABEL = ITEM_FRAME:FindFirstChild("ValueLabel")
     if not VALUE_LABEL then
         VALUE_LABEL = CREATE_VALUE_LABEL(ITEM_FRAME)
     end
-
     VALUE_LABEL.Text = "Value: " .. (ITEM_VALUE * AMOUNT)
+
+    -- Лейбл стабильности
+    local STABILITY_LABEL = ITEM_FRAME:FindFirstChild("StabilityLabel")
+    if not STABILITY_LABEL then
+        STABILITY_LABEL = CREATE_STABILITY_LABEL(ITEM_FRAME)
+    end
+    UPDATE_STABILITY_LABEL(STABILITY_LABEL, ITEM_STABILITY)
+
     return ITEM_VALUE * AMOUNT
 end
 
@@ -1141,7 +1212,7 @@ game.StarterGui:SetCore("SendNotification", {
     Title = "Trade Helper";
     Text = "Values synced: " .. tostring(PARSED_COUNT);
     Icon = "";
-    Duration = 1.5;
+    Duration = 0.5;
     Button1 = "Supreme Values";
     Callback = NotificationBindable;
 })

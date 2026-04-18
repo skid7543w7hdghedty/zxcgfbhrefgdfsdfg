@@ -40,7 +40,7 @@ local ancientValues = {
     ["Snowstorm"] = 150,
     ["Xenoknife"] = 195,
     ["Xenoshot"] = 195,
-	["Rainbow Gun"] = 300 ,
+	["Rainbow Gun"] = 300,
 	["Rainbow"] = 290,
 	["Candy"] = 105,
 	["Heartblade"] = 95,
@@ -91,7 +91,7 @@ local ancientValues = {
 	["Eternalcane"] = 18,
 	["Ginger Luger"] = 20,
 	["Lugercane"] = 18,
-	["Pixel"] = 20  ,
+	["Pixel"] = 20,
 	["Slasher"] = 20,
 	["Gingerblade"] = 18,
 	["Heat"] = 10,
@@ -387,8 +387,18 @@ local stabilityColors = {
     ["Unknown"] = Color3.fromRGB(150, 150, 150),
 }
 
--- Таблица стабильности скинов
-local stabilityValues = {
+-- Маппинг статусов сайта -> скрипта
+local SITE_STABILITY_MAP = {
+    ["overpaid for"] = "Overpaid",
+    ["underpaid for"] = "Underpaid",
+    ["stable"] = "Stable",
+    ["doing well"] = "Rising",
+    ["fluctuating"] = "Unstable",
+    ["decreasing"] = "Dropping",
+}
+
+-- Таблица стабильности скинов (фоллбэк)
+local stabilityFallback = {
 	["Corrupt"] = "Stable",
     ["Gingerscope"] = "Stable",
     ["Traveler's Axe"] = "Stable",
@@ -765,12 +775,6 @@ local stabilityValues = {
     ["Chroma Fire Bear"] = "Underpaid, 5-7",
 }
 
--- Нормализованная таблица стабильности для поиска
-local STABILITY_LOOKUP = {}
-for NAME, VAL in pairs(stabilityValues) do
-    STABILITY_LOOKUP[string.lower(NAME)] = VAL
-end
-
 local LP = game:GetService("Players").LocalPlayer
 local PG = LP:WaitForChild("PlayerGui", 5)
 if not PG then return end
@@ -817,18 +821,33 @@ local function NORMALIZE_LOOKUP_NAME(NAME)
 end
 
 local ITEM_VALUES = {}
+local ITEM_STABILITY = {}
 
 local function REBUILD_FALLBACK_VALUES()
     ITEM_VALUES = {}
+    ITEM_STABILITY = {}
 
     for NAME, VALUE in pairs(ancientValues) do
         ITEM_VALUES[NORMALIZE_LOOKUP_NAME(NAME)] = VALUE
     end
+
+    for NAME, STAB in pairs(stabilityFallback) do
+        ITEM_STABILITY[NORMALIZE_LOOKUP_NAME(NAME)] = STAB
+    end
+end
+
+-- Конвертация статуса с сайта в статус скрипта
+local function CONVERT_SITE_STABILITY(SITE_STATUS)
+    if not SITE_STATUS then return nil end
+    local LOWER = string.lower(SITE_STATUS)
+    LOWER = LOWER:gsub("^%s+", ""):gsub("%s+$", "")
+    return SITE_STABILITY_MAP[LOWER]
 end
 
 local function PARSE_PAGE_VALUES(HTML)
     local COUNT = 0
 
+    -- Парсинг значений
     for RAW_VALUE, RAW_NAME in HTML:gmatch('data%-value="([%d,]+)".-data%-name=\'(.-)\'') do
         local VALUE = tonumber((RAW_VALUE:gsub(",", "")))
         local NAME = NORMALIZE_DISPLAY_NAME(RAW_NAME)
@@ -836,6 +855,57 @@ local function PARSE_PAGE_VALUES(HTML)
         if VALUE and NAME ~= "" then
             ITEM_VALUES[NORMALIZE_LOOKUP_NAME(NAME)] = VALUE
             COUNT = COUNT + 1
+        end
+    end
+
+    -- Парсинг стабильности и ranged value из карточек предметов
+    -- Ищем блоки карточек с data-name, data-value, и внутри них Stability и Ranged Value
+    -- Типичная структура на сайте: карточка содержит data-name='...' и внутри текст Stability: ... и Ranged Value: ...
+
+    -- Парсим каждую карточку предмета целиком
+    for CARD in HTML:gmatch('<div[^>]*class="[^"]*card[^"]*"[^>]*>.-</div>%s*</div>%s*</div>') do
+        local RAW_NAME = CARD:match("data%-name='(.-)'")
+        if not RAW_NAME then
+            RAW_NAME = CARD:match('data%-name="(.-)"')
+        end
+
+        if RAW_NAME then
+            local NAME = NORMALIZE_DISPLAY_NAME(RAW_NAME)
+            local LOOKUP = NORMALIZE_LOOKUP_NAME(NAME)
+
+            -- Ищем Stability
+            local SITE_STABILITY = CARD:match("Stability:%s*</.->(.-)<")
+            if not SITE_STABILITY then
+                SITE_STABILITY = CARD:match("Stability:%s*([%w%s]+)")
+            end
+
+            -- Ищем Ranged Value
+            local RANGED_VALUE = CARD:match("Ranged Value:%s*</.->(.-)<")
+            if not RANGED_VALUE then
+                RANGED_VALUE = CARD:match("Ranged Value:%s*([%d,%-]+)")
+            end
+
+            if SITE_STABILITY then
+                SITE_STABILITY = SITE_STABILITY:gsub("<.->", "")
+                SITE_STABILITY = SITE_STABILITY:gsub("^%s+", ""):gsub("%s+$", "")
+
+                local CONVERTED = CONVERT_SITE_STABILITY(SITE_STABILITY)
+                if CONVERTED then
+                    local STABILITY_STRING = CONVERTED
+
+                    if RANGED_VALUE then
+                        RANGED_VALUE = RANGED_VALUE:gsub("<.->", "")
+                        RANGED_VALUE = RANGED_VALUE:gsub("^%s+", ""):gsub("%s+$", "")
+                        RANGED_VALUE = RANGED_VALUE:gsub(",", "")
+
+                        if RANGED_VALUE ~= "" and CONVERTED ~= "Stable" then
+                            STABILITY_STRING = CONVERTED .. ", " .. RANGED_VALUE
+                        end
+                    end
+
+                    ITEM_STABILITY[LOOKUP] = STABILITY_STRING
+                end
+            end
         end
     end
 
@@ -878,7 +948,7 @@ local function GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
         LOOKUP_NAME = "Chroma " .. ITEM_NAME
     end
 
-    return STABILITY_LOOKUP[NORMALIZE_LOOKUP_NAME(LOOKUP_NAME)]
+    return ITEM_STABILITY[NORMALIZE_LOOKUP_NAME(LOOKUP_NAME)]
 end
 
 -- Извлечение статуса из строки стабильности (например "Underpaid" из "Underpaid, 220")
@@ -1010,7 +1080,7 @@ local function UPDATE_ITEM_DISPLAY(ITEM_FRAME)
     end
 
     local ITEM_VALUE = GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
-    local ITEM_STABILITY = GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
+    local ITEM_STAB = GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
 
     if not ITEM_VALUE then
         CLEAR_ITEM_LABELS(ITEM_FRAME)
@@ -1029,7 +1099,7 @@ local function UPDATE_ITEM_DISPLAY(ITEM_FRAME)
     if not STABILITY_LABEL then
         STABILITY_LABEL = CREATE_STABILITY_LABEL(ITEM_FRAME)
     end
-    UPDATE_STABILITY_LABEL(STABILITY_LABEL, ITEM_STABILITY)
+    UPDATE_STABILITY_LABEL(STABILITY_LABEL, ITEM_STAB)
 
     return ITEM_VALUE * AMOUNT
 end
@@ -1199,20 +1269,13 @@ end
 
 SETUP_INVENTORY_GUI()
 
-local function callback(Text)
-    if Text == "Supreme Values" then
-        setclipboard("https://supremevalues.com/")
-    end
-end
-
 local NotificationBindable = Instance.new("BindableFunction")
 NotificationBindable.OnInvoke = callback
 
 game.StarterGui:SetCore("SendNotification", {
     Title = "Trade Helper";
-    Text = "Values synced: " .. tostring(PARSED_COUNT);
+    Text = "Cracked by Who? D A R K";
     Icon = "";
     Duration = 0.5;
-    Button1 = "Supreme Values";
     Callback = NotificationBindable;
 })

@@ -383,6 +383,7 @@ local stabilityColors = {
     ["Dropping"] = Color3.fromRGB(255, 0, 0),
     ["Unstable"] = Color3.fromRGB(180, 0, 255),
     ["Underpaid"] = Color3.fromRGB(255, 165, 0),
+    ["Undepaid"] = Color3.fromRGB(255, 165, 0),
     ["Overpaid"] = Color3.fromRGB(255, 255, 0),
     ["Unknown"] = Color3.fromRGB(150, 150, 150),
 }
@@ -765,12 +766,6 @@ local stabilityValues = {
     ["Chroma Fire Bear"] = "Underpaid, 5-7",
 }
 
--- Нормализованная таблица стабильности для поиска
-local STABILITY_LOOKUP = {}
-for NAME, VAL in pairs(stabilityValues) do
-    STABILITY_LOOKUP[string.lower(NAME)] = VAL
-end
-
 local LP = game:GetService("Players").LocalPlayer
 local PG = LP:WaitForChild("PlayerGui", 5)
 if not PG then return end
@@ -817,24 +812,131 @@ local function NORMALIZE_LOOKUP_NAME(NAME)
 end
 
 local ITEM_VALUES = {}
+local ITEM_STABILITIES = {}
 
-local function REBUILD_FALLBACK_VALUES()
+local STABILITY_STATUS_MAP = {
+    ["Overpaid For"] = "Overpaid",
+    ["Overpaid"] = "Overpaid",
+    ["Underpaid For"] = "Undepaid",
+    ["Underpaid"] = "Undepaid",
+    ["Undepaid"] = "Undepaid",
+    ["Stable"] = "Stable",
+    ["Doing Well"] = "Rising",
+    ["Rising"] = "Rising",
+    ["Fluctuating"] = "Unstable",
+    ["Unstable"] = "Unstable",
+    ["Decreasing"] = "Dropping",
+    ["Dropping"] = "Dropping",
+}
+
+local function TRANSLATE_STABILITY_STATUS(STATUS)
+    if not STATUS then
+        return nil
+    end
+
+    STATUS = HTML_DECODE(STATUS)
+    STATUS = STATUS:gsub("^%s+", "")
+    STATUS = STATUS:gsub("%s+$", "")
+
+    if STATUS == "" then
+        return nil
+    end
+
+    return STABILITY_STATUS_MAP[STATUS] or STATUS
+end
+
+local function NORMALIZE_RANGE_TEXT(RANGE_TEXT)
+    if not RANGE_TEXT then
+        return nil
+    end
+
+    RANGE_TEXT = HTML_DECODE(RANGE_TEXT)
+    RANGE_TEXT = RANGE_TEXT:gsub("^%s+", "")
+    RANGE_TEXT = RANGE_TEXT:gsub("%s+$", "")
+    RANGE_TEXT = RANGE_TEXT:gsub("%[", "")
+    RANGE_TEXT = RANGE_TEXT:gsub("%]", "")
+    RANGE_TEXT = RANGE_TEXT:gsub(",", "")
+    RANGE_TEXT = RANGE_TEXT:gsub("%s*%-%s*", "-")
+
+    if RANGE_TEXT == "" or RANGE_TEXT == "N/A" then
+        return nil
+    end
+
+    return RANGE_TEXT
+end
+
+local function BUILD_STABILITY_TEXT(STATUS_TEXT, RANGE_TEXT)
+    local STATUS = TRANSLATE_STABILITY_STATUS(STATUS_TEXT)
+    if not STATUS then
+        return nil
+    end
+
+    local RANGE = NORMALIZE_RANGE_TEXT(RANGE_TEXT)
+    if not RANGE then
+        return STATUS
+    end
+
+    local RANGE_MIN, RANGE_MAX = RANGE:match("^(%d+)%-(%d+)$")
+    local FUTURE_VALUE = RANGE
+
+    if RANGE_MIN and RANGE_MAX then
+        if STATUS == "Overpaid" or STATUS == "Rising" then
+            FUTURE_VALUE = RANGE_MAX
+        elseif STATUS == "Undepaid" or STATUS == "Dropping" then
+            FUTURE_VALUE = RANGE_MIN
+        elseif STATUS == "Unstable" then
+            FUTURE_VALUE = RANGE_MIN .. "-" .. RANGE_MAX
+        end
+    end
+
+    return STATUS .. ", " .. FUTURE_VALUE
+end
+
+local function NORMALIZE_FALLBACK_STABILITY(TEXT)
+    if not TEXT then
+        return nil
+    end
+
+    local RAW_STATUS, RAW_RANGE = HTML_DECODE(TEXT):match("^%s*([^,]+)%s*,%s*(.+)%s*$")
+    if not RAW_STATUS then
+        return TRANSLATE_STABILITY_STATUS(TEXT)
+    end
+
+    return BUILD_STABILITY_TEXT(RAW_STATUS, RAW_RANGE)
+end
+
+local function REBUILD_FALLBACK_DATA()
     ITEM_VALUES = {}
+    ITEM_STABILITIES = {}
 
     for NAME, VALUE in pairs(ancientValues) do
         ITEM_VALUES[NORMALIZE_LOOKUP_NAME(NAME)] = VALUE
     end
+
+    for NAME, STABILITY in pairs(stabilityValues) do
+        ITEM_STABILITIES[NORMALIZE_LOOKUP_NAME(NAME)] = NORMALIZE_FALLBACK_STABILITY(STABILITY)
+    end
 end
 
-local function PARSE_PAGE_VALUES(HTML)
+local function PARSE_PAGE_DATA(HTML)
     local COUNT = 0
 
-    for RAW_VALUE, RAW_NAME in HTML:gmatch('data%-value="([%d,]+)".-data%-name=\'(.-)\'') do
-        local VALUE = tonumber((RAW_VALUE:gsub(",", "")))
+    for RAW_NAME, RAW_VALUE, RAW_RANGE, RAW_STABILITY in HTML:gmatch('data%-name=\'(.-)\'.-itemvalue">(.-)</b>.-itemrange">(.-)</b>.-itemstability">(.-)</b>') do
         local NAME = NORMALIZE_DISPLAY_NAME(RAW_NAME)
+        local VALUE = tonumber((HTML_DECODE(RAW_VALUE):gsub(",", ""):gsub("%s+", "")))
+        local STABILITY = BUILD_STABILITY_TEXT(RAW_STABILITY, RAW_RANGE)
 
-        if VALUE and NAME ~= "" then
-            ITEM_VALUES[NORMALIZE_LOOKUP_NAME(NAME)] = VALUE
+        if NAME ~= "" then
+            local LOOKUP_NAME = NORMALIZE_LOOKUP_NAME(NAME)
+
+            if VALUE then
+                ITEM_VALUES[LOOKUP_NAME] = VALUE
+            end
+
+            if STABILITY then
+                ITEM_STABILITIES[LOOKUP_NAME] = STABILITY
+            end
+
             COUNT = COUNT + 1
         end
     end
@@ -843,7 +945,7 @@ local function PARSE_PAGE_VALUES(HTML)
 end
 
 local function REFRESH_VALUES_FROM_SUPREME()
-    REBUILD_FALLBACK_VALUES()
+    REBUILD_FALLBACK_DATA()
 
     local TOTAL_PARSED = 0
 
@@ -853,7 +955,7 @@ local function REFRESH_VALUES_FROM_SUPREME()
         end)
 
         if OK and HTML and HTML ~= "" then
-            TOTAL_PARSED = TOTAL_PARSED + PARSE_PAGE_VALUES(HTML)
+            TOTAL_PARSED = TOTAL_PARSED + PARSE_PAGE_DATA(HTML)
         end
     end
 
@@ -878,7 +980,7 @@ local function GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
         LOOKUP_NAME = "Chroma " .. ITEM_NAME
     end
 
-    return STABILITY_LOOKUP[NORMALIZE_LOOKUP_NAME(LOOKUP_NAME)]
+    return ITEM_STABILITIES[NORMALIZE_LOOKUP_NAME(LOOKUP_NAME)]
 end
 
 -- Извлечение статуса из строки стабильности (например "Underpaid" из "Underpaid, 220")

@@ -376,7 +376,7 @@ local ancientValues = {
 }
 
 local stabilityColors = {
-    ["Stable"] = Color3.fromRGB(107, 207, 77),
+    ["Stable"] = Color3.fromRGB(10, 248, 28),
     ["Doing Well"] = Color3.fromRGB(0, 0, 255),
     ["Receding"] = Color3.fromRGB(254, 240, 0),
     ["Overpaid For"] = Color3.fromRGB(67, 117, 199),
@@ -977,13 +977,15 @@ end
 local function CREATE_INFO_LABEL(PARENT)
     local infoLabel = Instance.new("TextLabel")
     infoLabel.Name = "InfoLabel"
-    infoLabel.Size = UDim2.new(1, 0, 0.45, 0)
+    infoLabel.Size = UDim2.new(1, 0, 0.43, 0)
     infoLabel.Position = UDim2.new(0, 0, 0.15, 0)
     infoLabel.BackgroundTransparency = 0.5
     infoLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     infoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    infoLabel.TextScaled = true
+    infoLabel.TextScaled = false
+    infoLabel.TextWrapped = true
     infoLabel.Font = Enum.Font.GothamBold
+    infoLabel.TextSize = 13.5
     infoLabel.RichText = true
     infoLabel.Parent = PARENT
     return infoLabel
@@ -1001,10 +1003,8 @@ local function BUILD_STABILITY_DISPLAY(STATUS, RANGE)
     local arrow = GET_STABILITY_ARROW(STATUS)
 
     if STATUS == "Stable" then
-        -- Для Stable не показываем диапазон
         return string.format('<font color="rgb(%d,%d,%d)">%s %s</font>', r, g, b, STATUS, arrow)
     else
-        -- Для всех остальных статусов показываем диапазон через запятую
         local displayText = STATUS .. " " .. arrow
         if RANGE and RANGE ~= "" then
             displayText = displayText .. ", " .. RANGE

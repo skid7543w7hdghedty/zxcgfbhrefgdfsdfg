@@ -821,6 +821,7 @@ end
 local ITEM_VALUES = {}
 local ITEM_STABILITIES = {}
 local ITEM_DEMANDS = {}
+local ITEM_RANGES = {}
 
 local STABILITY_STATUS_MAP = {
     ["Overpaid For"] = "Overpaid For",
@@ -860,27 +861,18 @@ end
 
 local function BUILD_STABILITY_TEXT(STATUS_TEXT, RANGE_TEXT)
     local STATUS = TRANSLATE_STABILITY_STATUS(STATUS_TEXT)
-    if not STATUS then return nil end
+    if not STATUS then return nil, nil end
     local RANGE = NORMALIZE_RANGE_TEXT(RANGE_TEXT)
-    if not RANGE then return STATUS end
-    local RANGE_MIN, RANGE_MAX = RANGE:match("^(%d+)%-(%d+)$")
-    local FUTURE_VALUE = RANGE
-    if RANGE_MIN and RANGE_MAX then
-        if STATUS == "Overpaid For" or STATUS == "Doing Well" then
-            FUTURE_VALUE = RANGE_MAX
-        elseif STATUS == "Underpaid For" or STATUS == "Receding" then
-            FUTURE_VALUE = RANGE_MIN
-        else
-            FUTURE_VALUE = RANGE_MIN .. "-" .. RANGE_MAX
-        end
-    end
-    return STATUS .. ", " .. FUTURE_VALUE
+    return STATUS, RANGE
 end
 
 local function NORMALIZE_FALLBACK_STABILITY(TEXT)
-    if not TEXT then return nil end
+    if not TEXT then return nil, nil end
     local RAW_STATUS, RAW_RANGE = HTML_DECODE(TEXT):match("^%s*([^,]+)%s*,%s*(.+)%s*$")
-    if not RAW_STATUS then return TRANSLATE_STABILITY_STATUS(TEXT) end
+    if not RAW_STATUS then
+        local STATUS = TRANSLATE_STABILITY_STATUS(TEXT)
+        return STATUS, nil
+    end
     return BUILD_STABILITY_TEXT(RAW_STATUS, RAW_RANGE)
 end
 
@@ -888,11 +880,19 @@ local function REBUILD_FALLBACK_DATA()
     ITEM_VALUES = {}
     ITEM_STABILITIES = {}
     ITEM_DEMANDS = {}
+    ITEM_RANGES = {}
     for NAME, VALUE in pairs(ancientValues) do
         ITEM_VALUES[NORMALIZE_LOOKUP_NAME(NAME)] = VALUE
     end
     for NAME, STABILITY in pairs(stabilityValues) do
-        ITEM_STABILITIES[NORMALIZE_LOOKUP_NAME(NAME)] = NORMALIZE_FALLBACK_STABILITY(STABILITY)
+        local lookupName = NORMALIZE_LOOKUP_NAME(NAME)
+        local status, range = NORMALIZE_FALLBACK_STABILITY(STABILITY)
+        if status then
+            ITEM_STABILITIES[lookupName] = status
+        end
+        if range then
+            ITEM_RANGES[lookupName] = range
+        end
     end
 end
 
@@ -901,12 +901,13 @@ local function PARSE_PAGE_DATA(HTML)
     for RAW_NAME, RAW_VALUE, RAW_RANGE, RAW_STABILITY, RAW_DEMAND in HTML:gmatch('data%-name=\'(.-)\'.-itemvalue">(.-)</b>.-itemrange">(.-)</b>.-itemstability">(.-)</b>.-Demand%s*%-%s*<b>(%d+)</b>') do
         local NAME = NORMALIZE_DISPLAY_NAME(RAW_NAME)
         local VALUE = tonumber((HTML_DECODE(RAW_VALUE):gsub(",", ""):gsub("%s+", "")))
-        local STABILITY = BUILD_STABILITY_TEXT(RAW_STABILITY, RAW_RANGE)
+        local STATUS, RANGE = BUILD_STABILITY_TEXT(RAW_STABILITY, RAW_RANGE)
         local DEMAND = tonumber(RAW_DEMAND)
         if NAME ~= "" then
             local LOOKUP_NAME = NORMALIZE_LOOKUP_NAME(NAME)
             if VALUE then ITEM_VALUES[LOOKUP_NAME] = VALUE end
-            if STABILITY then ITEM_STABILITIES[LOOKUP_NAME] = STABILITY end
+            if STATUS then ITEM_STABILITIES[LOOKUP_NAME] = STATUS end
+            if RANGE then ITEM_RANGES[LOOKUP_NAME] = RANGE end
             if DEMAND then ITEM_DEMANDS[LOOKUP_NAME] = DEMAND end
             COUNT = COUNT + 1
         end
@@ -942,6 +943,14 @@ local function GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
     return ITEM_STABILITIES[NORMALIZE_LOOKUP_NAME(LOOKUP_NAME)]
 end
 
+local function GET_ITEM_RANGE(ITEM_NAME, IS_CHROMA)
+    local LOOKUP_NAME = ITEM_NAME
+    if IS_CHROMA and not ITEM_NAME:match("^Chroma%s+") and not ITEM_NAME:match("^C%.%s*") then
+        LOOKUP_NAME = "Chroma " .. ITEM_NAME
+    end
+    return ITEM_RANGES[NORMALIZE_LOOKUP_NAME(LOOKUP_NAME)]
+end
+
 local function GET_ITEM_DEMAND(ITEM_NAME, IS_CHROMA)
     local LOOKUP_NAME = ITEM_NAME
     if IS_CHROMA and not ITEM_NAME:match("^Chroma%s+") and not ITEM_NAME:match("^C%.%s*") then
@@ -950,27 +959,16 @@ local function GET_ITEM_DEMAND(ITEM_NAME, IS_CHROMA)
     return ITEM_DEMANDS[NORMALIZE_LOOKUP_NAME(LOOKUP_NAME)]
 end
 
-local function GET_STATUS_FROM_STRING(FULL_STRING)
-    if not FULL_STRING then return nil end
-    local status = FULL_STRING:match("^([^,]+)")
-    if status then
-        status = status:gsub("^%s+", ""):gsub("%s+$", "")
-    end
-    return status
-end
-
-local function GET_STABILITY_COLOR(FULL_STRING)
-    local status = GET_STATUS_FROM_STRING(FULL_STRING)
-    if status and stabilityColors[status] then
-        return stabilityColors[status]
+local function GET_STABILITY_COLOR(STATUS)
+    if STATUS and stabilityColors[STATUS] then
+        return stabilityColors[STATUS]
     end
     return stabilityColors["Unknown"]
 end
 
-local function GET_STABILITY_ARROW(FULL_STRING)
-    local status = GET_STATUS_FROM_STRING(FULL_STRING)
-    if status and stabilityArrows[status] then
-        return stabilityArrows[status]
+local function GET_STABILITY_ARROW(STATUS)
+    if STATUS and stabilityArrows[STATUS] then
+        return stabilityArrows[STATUS]
     end
     return stabilityArrows["Unknown"]
 end
@@ -991,24 +989,33 @@ local function CREATE_INFO_LABEL(PARENT)
     return infoLabel
 end
 
-local function UPDATE_STABILITY_TEXT(STABILITY)
-    if STABILITY then
-        local stabilityStatus = STABILITY:match("^([^,]+)") or STABILITY
-        local arrow = GET_STABILITY_ARROW(stabilityStatus)
-        local color = GET_STABILITY_COLOR(stabilityStatus)
-        local r, g, b = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
-        return string.format('<font color="rgb(%d,%d,%d)">%s %s</font>', r, g, b, stabilityStatus, arrow)
-    else
+local function BUILD_STABILITY_DISPLAY(STATUS, RANGE)
+    if not STATUS then
         local color = stabilityColors["Unknown"]
         local r, g, b = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
         return string.format('<font color="rgb(%d,%d,%d)">Unknown ~</font>', r, g, b)
+    end
+
+    local color = GET_STABILITY_COLOR(STATUS)
+    local r, g, b = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
+    local arrow = GET_STABILITY_ARROW(STATUS)
+
+    if STATUS == "Stable" then
+        -- Для Stable не показываем диапазон
+        return string.format('<font color="rgb(%d,%d,%d)">%s %s</font>', r, g, b, STATUS, arrow)
+    else
+        -- Для всех остальных статусов показываем диапазон через запятую
+        local displayText = STATUS .. " " .. arrow
+        if RANGE and RANGE ~= "" then
+            displayText = displayText .. ", " .. RANGE
+        end
+        return string.format('<font color="rgb(%d,%d,%d)">%s</font>', r, g, b, displayText)
     end
 end
 
 local function CLEAR_ITEM_LABELS(ITEM_FRAME)
     local INFO_LABEL = ITEM_FRAME:FindFirstChild("InfoLabel")
     if INFO_LABEL then INFO_LABEL:Destroy() end
-    -- Также убираем старые отдельные лейблы если остались
     local VALUE_LABEL = ITEM_FRAME:FindFirstChild("ValueLabel")
     if VALUE_LABEL then VALUE_LABEL:Destroy() end
     local DEMAND_LABEL = ITEM_FRAME:FindFirstChild("DemandLabel")
@@ -1050,7 +1057,8 @@ local function UPDATE_ITEM_DISPLAY(ITEM_FRAME)
     local ITEM_NAME, AMOUNT, IS_CHROMA = GET_ITEM_UI_DATA(ITEM_FRAME)
     if not ITEM_NAME then CLEAR_ITEM_LABELS(ITEM_FRAME); return 0 end
     local ITEM_VALUE = GET_ITEM_VALUE(ITEM_NAME, IS_CHROMA)
-    local ITEM_STABILITY = GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
+    local ITEM_STATUS = GET_ITEM_STABILITY(ITEM_NAME, IS_CHROMA)
+    local ITEM_RANGE = GET_ITEM_RANGE(ITEM_NAME, IS_CHROMA)
     local ITEM_DEMAND = GET_ITEM_DEMAND(ITEM_NAME, IS_CHROMA)
     if not ITEM_VALUE then CLEAR_ITEM_LABELS(ITEM_FRAME); return 0 end
 
@@ -1059,7 +1067,7 @@ local function UPDATE_ITEM_DISPLAY(ITEM_FRAME)
 
     local valueLine = "Value: " .. (ITEM_VALUE * AMOUNT)
     local demandLine = "Demand: " .. (ITEM_DEMAND or "N/A")
-    local stabilityLine = UPDATE_STABILITY_TEXT(ITEM_STABILITY)
+    local stabilityLine = BUILD_STABILITY_DISPLAY(ITEM_STATUS, ITEM_RANGE)
 
     INFO_LABEL.Text = valueLine .. "\n" .. demandLine .. "\n" .. stabilityLine
 

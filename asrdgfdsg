@@ -29,7 +29,7 @@
 -- Можно указать несколько адресов — скрипт пробует их по очереди.
 -- ============================================================
 local BASE_API_URLS = {
-    "https://mm2-values-site.vercel.app/api/values/",
+    "https://mm2-values-site-two.vercel.app/api/values/",
     "https://update-currency-script.vercel.app/api/values/", -- старый (резерв)
 }
 

@@ -1,5 +1,13 @@
 -- ================================================================
--- Trade Helper 5.1
+-- Trade Helper 5.4
+-- Новое в 5.4: цены Uncommon снова показываются; скрываются только
+-- Common без числовой валюты (например "x1 T1 Common")
+-- Новое в 5.3: новый формат заголовков трейда: у вас
+-- "Values: N | Profit: P (мин-макс)", у другого игрока "Values: N (мин-макс)"
+-- Новое в 5.2: данные берутся с собственного сайта-прослойки
+-- (mm2-values-site на Vercel), который сам скрейпит supremevalues.com
+-- и автообновляет значения каждые ~5 минут. Поддержка нескольких
+-- резервных адресов API.
 -- Загружает данные напрямую из КАЖДОЙ категории сайта:
 -- /api/values/<category> — в отличие от /api/values/all, эти
 -- эндпоинты отдают ПОЛНЫЕ данные:
@@ -14,7 +22,16 @@
 --     иначе — по приоритету категорий)
 -- ================================================================
 
-local BASE_API_URL = "https://mm2-values-site-1.vercel.app/api/values/"
+-- ============================================================
+-- ВАЖНО: впиши сюда адрес СВОЕГО сайта, развёрнутого на Vercel
+-- (проект mm2-values-site, см. README.md в архиве).
+-- Формат API тот же: /api/values/<категория>
+-- Можно указать несколько адресов — скрипт пробует их по очереди.
+-- ============================================================
+local BASE_API_URLS = {
+    "https://mm2-values-site-1.vercel.app/api/values/",
+    "https://update-currency-script.vercel.app/api/values/", -- старый (резерв)
+}
 
 -- Порядок = приоритет при совпадении имён (если категорию не удалось
 -- определить по тегу в GUI)
@@ -188,9 +205,9 @@ local function RECORD_TIER_STAT(CATEGORY, TIER_TEXT, VALUE_NUM)
     end
 end
 
-local function FETCH_CATEGORY(CATEGORY)
+local function FETCH_FROM(BASE_URL, CATEGORY)
     local OK, RESPONSE = pcall(function()
-        return game:HttpGet(BASE_API_URL .. CATEGORY)
+        return game:HttpGet(BASE_URL .. CATEGORY)
     end)
     if not OK or not RESPONSE or RESPONSE == "" then return nil end
     local PARSED_OK, DATA = pcall(function()
@@ -200,6 +217,14 @@ local function FETCH_CATEGORY(CATEGORY)
         return nil
     end
     return DATA.items
+end
+
+local function FETCH_CATEGORY(CATEGORY)
+    for _, BASE_URL in ipairs(BASE_API_URLS) do
+        local ITEMS = FETCH_FROM(BASE_URL, CATEGORY)
+        if ITEMS then return ITEMS end
+    end
+    return nil
 end
 
 local function REFRESH_VALUES_FROM_SITE()
@@ -471,6 +496,18 @@ local function UPDATE_ITEM_DISPLAY(ITEM_FRAME)
     local ENTRIES = FIND_ITEM_ENTRIES(ITEM_NAME, IS_CHROMA, PREFERRED_CATEGORY)
     if not ENTRIES or #ENTRIES == 0 then CLEAR_ITEM_LABELS(ITEM_FRAME); return 0, 0, 0 end
 
+    -- Common без числовой валюты (например "x1 T1 Common") ничего не стоят —
+    -- не показываем для них оверлей и не считаем в трейде
+    local HAS_REAL_VALUE = false
+    for _, ITEM in ipairs(ENTRIES) do
+        local CAT = ITEM.entry.category
+        if ITEM.entry.valueNum or CAT ~= "commons" then
+            HAS_REAL_VALUE = true
+            break
+        end
+    end
+    if not HAS_REAL_VALUE then CLEAR_ITEM_LABELS(ITEM_FRAME); return 0, 0, 0 end
+
     -- Агрегируем варианты (обычно 1 запись; для Gun/Knife может быть 2)
     local TOTAL_MIN, TOTAL_MAX, TOTAL_NOMINAL = nil, nil, nil
     local VALUE_PARTS = {}
@@ -587,34 +624,34 @@ local function SETUP_TRADE_GUI(TG)
         return TOTAL, TOTAL_MIN, TOTAL_MAX
     end
 
-    local function FORMAT_TOTAL(TOTAL, TOTAL_MIN, TOTAL_MAX)
-        local TEXT = "Profit: " .. TOTAL
-        if TOTAL_MIN ~= TOTAL_MAX then
-            TEXT = TEXT .. " (" .. TOTAL_MIN .. "-" .. TOTAL_MAX .. ")"
-        end
-        return TEXT
-    end
-
     local function UPDATE_OFFER_VALUES()
         local YOUR_TOTAL, YOUR_MIN, YOUR_MAX = SUM_OFFER(YOC)
         local THEIR_TOTAL, THEIR_MIN, THEIR_MAX = SUM_OFFER(TOC)
 
-        YOT.Text = FORMAT_TOTAL(YOUR_TOTAL, YOUR_MIN, YOUR_MAX)
-        TOT.Text = FORMAT_TOTAL(THEIR_TOTAL, THEIR_MIN, THEIR_MAX)
+        -- Другой игрок: сколько он даёт сейчас, в скобках — минимум и максимум
+        -- (скобки появляются только если есть предметы со статусом кроме Stable:
+        -- Overpaid For, Underpaid For, Fluctuating и т.д.)
+        local THEIR_TEXT = "Values: " .. THEIR_TOTAL
+        if THEIR_MIN ~= THEIR_MAX then
+            THEIR_TEXT = THEIR_TEXT .. " (" .. THEIR_MIN .. "-" .. THEIR_MAX .. ")"
+        end
+        TOT.Text = THEIR_TEXT
 
+        -- Вы: сколько валют вы отдаёте, затем профит и его разброс
+        local YOUR_TEXT = "Values: " .. YOUR_TOTAL
         if THEIR_TOTAL > 0 then
             local PROFIT = THEIR_TOTAL - YOUR_TOTAL
+            YOUR_TEXT = YOUR_TEXT .. " | Profit: " .. PROFIT
             -- Минимальный профит: их минимум минус ваш максимум
             -- (худший сценарий: их скины по нижней границе, ваши — по верхней)
             local MIN_PROFIT = THEIR_MIN - YOUR_MAX
             -- Максимальный профит: их максимум минус ваш минимум
             local MAX_PROFIT = THEIR_MAX - YOUR_MIN
-            local PROFIT_TEXT = " | Profit: " .. PROFIT
-            if MIN_PROFIT ~= PROFIT or MAX_PROFIT ~= PROFIT then
-                PROFIT_TEXT = PROFIT_TEXT .. " (" .. MIN_PROFIT .. ".." .. MAX_PROFIT .. ")"
+            if MIN_PROFIT ~= MAX_PROFIT then
+                YOUR_TEXT = YOUR_TEXT .. " (" .. MIN_PROFIT .. "-" .. MAX_PROFIT .. ")"
             end
-            YOT.Text = YOT.Text .. PROFIT_TEXT
         end
+        YOT.Text = YOUR_TEXT
     end
 
     UPDATE_OFFER_VALUES()

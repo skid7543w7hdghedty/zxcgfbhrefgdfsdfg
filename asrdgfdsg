@@ -1,5 +1,5 @@
 local BASE_API_URLS = {
-    "https://mm2-trade-helper-roan-xi.vercel.app/api/values/",
+    "https://mm2-trade-helper-umber.vercel.app/api/values/",
 }
 
 -- Порядок = приоритет при совпадении имён (если категорию не удалось
